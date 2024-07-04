@@ -224,7 +224,10 @@ class CountdownPopup(QDialog):
             self.is_timer_running = False
             self.happy_button.setEnabled(True)
             self.sad_button.setEnabled(True)
-            play_melody()
+            try:
+                play_melody()
+            except Exception as e:
+                print(f"Error playing melody: {e}")
 
     def reset_timer(self):
         self.timer.stop()
