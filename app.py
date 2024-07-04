@@ -1,11 +1,15 @@
+import sys
+
 from PySide6.QtWidgets import (
     QApplication,
+    QMainWindow,
     QDialog,
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
     QLabel,
     QStyle,
+    QWidget,
 )
 from PySide6.QtCore import QTimer, Qt, QDate
 from PySide6.QtGui import QColor, QPalette
@@ -92,7 +96,7 @@ def play_melody():
     play_obj.wait_done()
 
 
-class CountdownPopup(QDialog):
+class XbitoPomodoro(QMainWindow):
     def __init__(self, app, phrase):
         self.phrase = phrase
         self.app = app
@@ -103,7 +107,10 @@ class CountdownPopup(QDialog):
         super().__init__()
         self.setWindowTitle("Xbito - Pomodoro Timer")
         self.setGeometry(100, 100, 250, 115)
-        self.layout = QVBoxLayout()
+        # Create a central widget and layout
+        centralWidget = QWidget()
+        self.layout = QVBoxLayout(centralWidget)
+
         self.layout.addStretch(1)
         self.setLayout(self.layout)
 
@@ -114,6 +121,9 @@ class CountdownPopup(QDialog):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_progress_bar)
         self.update_timer.start(60000)  # Update every minute
+
+        # Set the central widget
+        self.setCentralWidget(centralWidget)
 
         # Set the window to always stay on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -338,7 +348,7 @@ class CountdownPopup(QDialog):
         # Set the dark theme for the window
         self.setStyleSheet(
             """
-            QDialog {
+            QMainWindow {
                 background-color: #333333;
                 color: #ffffff;
             }
@@ -377,11 +387,11 @@ class CountdownPopup(QDialog):
 
 
 def main():
-    app = QApplication([])
+    app = QApplication(sys.argv)
     phrase = get_motivational_phrase()
-    countdown_popup = CountdownPopup(app, phrase)
-    countdown_popup.show()
-    app.exec_()
+    main_window = XbitoPomodoro(app, phrase)
+    main_window.show()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
