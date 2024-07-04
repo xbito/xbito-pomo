@@ -1,14 +1,15 @@
 import sys
+import logging
+import tempfile
+import os
 
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
-    QDialog,
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
     QLabel,
-    QStyle,
     QWidget,
 )
 from PySide6.QtCore import QTimer, Qt, QDate
@@ -22,6 +23,7 @@ from math import log10
 
 from MultiColorProgressBar import MultiColorProgressBar
 from motivation import get_motivational_phrase
+import winsound
 
 
 def init_pomodoro_db():
@@ -51,49 +53,46 @@ def insert_pomodoro_session(start_time, end_time, feeling):
 
 
 def play_melody():
-    # Create a celebratory melody with a sequence of notes
-    durations = [250, 250, 300, 200, 250, 300, 450]  # Durations in milliseconds
-    notes = [
-        Sine(523),  # C5
-        Sine(587),  # D5
-        Sine(659),  # E5
-        Sine(784),  # G5
-        Sine(880),  # A5
-        Sine(988),  # B5
-        Sine(1046),  # C6
-    ]
+    try:
+        logging.debug("Attempting to play melody.")
+        # Create a celebratory melody with a sequence of notes
+        durations = [250, 250, 300, 200, 250, 300, 450]  # Durations in milliseconds
+        notes = [
+            Sine(523),  # C5
+            Sine(587),  # D5
+            Sine(659),  # E5
+            Sine(784),  # G5
+            Sine(880),  # A5
+            Sine(988),  # B5
+            Sine(1046),  # C6
+        ]
 
-    # Initial and final volumes as a percentage
-    initial_volume = 0.1
-    final_volume = 0.5
+        # Initial and final volumes as a percentage
+        initial_volume = 0.1
+        final_volume = 0.5
 
-    # Calculate the volume increase per note
-    volume_step = (final_volume - initial_volume) / (len(notes) - 1)
+        # Calculate the volume increase per note
+        volume_step = (final_volume - initial_volume) / (len(notes) - 1)
+        segments = []
 
-    # Combine the notes to form a melody, adjusting the volume for each
-    melody = AudioSegment.silent(
-        duration=0
-    )  # Start with a silent segment to concatenate to
-    for i, note in enumerate(notes):
-        # Calculate the volume for the current note
-        current_volume = initial_volume + (volume_step * i)
-        # Convert to dB
-        volume_change_dB = 20 * log10(current_volume)
-        # Generate the note with the specified duration and apply volume change
-        note_audio = note.to_audio_segment(duration=durations[i]).apply_gain(
-            volume_change_dB
-        )
-        # Append the note to the melody
-        melody += note_audio
+        for i, note in enumerate(notes):
+            volume = initial_volume + i * volume_step
+            segment = note.to_audio_segment(duration=durations[i]).apply_gain(
+                20 * log10(volume)
+            )
+            segments.append(segment)
 
-    # Play the melody
-    play_obj = sa.play_buffer(
-        melody.raw_data,
-        num_channels=melody.channels,
-        bytes_per_sample=melody.sample_width,
-        sample_rate=melody.frame_rate,
-    )
-    play_obj.wait_done()
+        melody = sum(segments)
+        # Save the generated melody to a temporary WAV file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
+            melody.export(tmpfile.name, format="wav")
+            # Play the WAV file
+            winsound.PlaySound(tmpfile.name, winsound.SND_FILENAME)
+            logging.debug("Melody finished playing.")
+        # Clean up the temporary file
+        os.remove(tmpfile.name)
+    except Exception as e:
+        logging.error("Error occurred while attempting to play melody: %s", e)
 
 
 class XbitoPomodoro(QMainWindow):
@@ -229,6 +228,9 @@ class XbitoPomodoro(QMainWindow):
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
         if self.remaining_seconds <= 0:
+            logging.debug(
+                "Timer completed. Stopping timer and attempting to play melody."
+            )
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
@@ -237,7 +239,8 @@ class XbitoPomodoro(QMainWindow):
             try:
                 play_melody()
             except Exception as e:
-                print(f"Error playing melody: {e}")
+                logging.error(f"Error playing melody: {e}")
+            logging.debug("Completed timer handling logic after melody.")
 
     def reset_timer(self):
         self.timer.stop()
@@ -382,11 +385,15 @@ class XbitoPomodoro(QMainWindow):
         )
 
     def closeEvent(self, event):
+        logging.debug("Application close event triggered. Resetting timer.")
         self.reset_timer()
         event.accept()  # Ensures the window closes smoothly
 
 
 def main():
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     app = QApplication(sys.argv)
     phrase = get_motivational_phrase()
     main_window = XbitoPomodoro(app, phrase)

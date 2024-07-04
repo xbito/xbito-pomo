@@ -1,3 +1,5 @@
-PySide6
-pydub
-simpleaudio
+PySide6==6.7.0
+pydub==0.25.1
+simpleaudio==1.0.4
+shiboken6==6.7.0
+winsound
