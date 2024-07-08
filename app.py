@@ -30,7 +30,16 @@ class XbitoPomodoro(QMainWindow):
 
         super().__init__()
         self.setWindowTitle("Xbito - Pomodoro Timer")
-        self.setGeometry(100, 100, 250, 115)
+        self.setGeometry(100, 100, 380, 115)  # Set maximum width to 380 pixels
+        self.setMaximumWidth(380)
+
+        # Positioning the window near the top right of the screen
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.geometry()
+        x = screen_geometry.width() * 0.9 - self.width()  # 10% from the right edge
+        y = screen_geometry.height() * 0.1  # 10% from the top
+        self.move(int(x), int(y))
+
         # Create a central widget and layout
         centralWidget = QWidget()
         self.layout = QVBoxLayout(centralWidget)
@@ -51,13 +60,6 @@ class XbitoPomodoro(QMainWindow):
 
         # Set the window to always stay on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-
-        # Positioning the window near the top right of the screen
-        screen = QApplication.primaryScreen()
-        screen_geometry = screen.geometry()
-        x = screen_geometry.width() * 0.9 - self.width()  # 10% from the right edge
-        y = screen_geometry.height() * 0.1  # 10% from the top
-        self.move(int(x), int(y))
 
         self.timer_type = "Focus"  # Attribute to track the current timer type
         self.timer_type_label = QLabel(
@@ -135,8 +137,9 @@ class XbitoPomodoro(QMainWindow):
         self.apply_dark_theme()
 
     def show_motivational_phrase(self):
-        # Display the Phrase in the popup
+        # Display motivational Phrase in the screen, allowing for multi-line if it exceeds the width
         self.motivational_phrase_label = QLabel(self.phrase)
+        self.motivational_phrase_label.setWordWrap(True)  # Enable word wrapping
         self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
         self.motivational_phrase_label.setStyleSheet(
             "font-size: 16px; font-weight: bold;"
