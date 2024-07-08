@@ -25,42 +25,37 @@ class XbitoPomodoro(QMainWindow):
         self.phrase = phrase
         self.app = app
         self.start_time = None  # To store the session start time
+        self.initial_seconds = 1800  # 30 minutes
+        self.rest_seconds = 300  # 5 minutes for Rest timer
+        self.remaining_seconds = self.initial_seconds
+        self.is_timer_running = False  # Track timer state
         # Initialize the database
         init_pomodoro_db()
-
         super().__init__()
-        self.setWindowTitle("Xbito - Pomodoro Timer")
-        self.setGeometry(100, 100, 380, 115)  # Set maximum width to 380 pixels
-        self.setMaximumWidth(380)
-
-        # Positioning the window near the top right of the screen
-        screen = QApplication.primaryScreen()
-        screen_geometry = screen.geometry()
-        x = screen_geometry.width() * 0.9 - self.width()  # 10% from the right edge
-        y = screen_geometry.height() * 0.1  # 10% from the top
-        self.move(int(x), int(y))
-
+        ## Window Setup
+        self.setup_window()
         # Create a central widget and layout
         centralWidget = QWidget()
         self.layout = QVBoxLayout(centralWidget)
-
         self.layout.addStretch(1)
         self.setLayout(self.layout)
-
         self.init_date_day_label()
         self.init_progress_bar()
         self.update_progress_bar()
-        # Update the progress bar and date/day label every minute
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.update_progress_bar)
-        self.update_timer.start(60000)  # Update every minute
-
-        # Set the central widget
         self.setCentralWidget(centralWidget)
+        # Update the progress bar and date/day label every minute
+        self.setup_timer()
+        # Create a label to display the timer type (Focus/Rest)
+        self.setup_timer_type_label()
+        # Create a horizontal layout for buttons and the countdown label
+        self.setup_controls_layout()
+        self.setup_start_pause_button()
+        self.layout.addStretch(1)
+        self.setup_emoticon_buttons()
+        self.setup_motivational_phrase()
+        self.apply_dark_theme()
 
-        # Set the window to always stay on top
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-
+    def setup_timer_type_label(self):
         self.timer_type = "Focus"  # Attribute to track the current timer type
         self.timer_type_label = QLabel(
             self.timer_type
@@ -72,9 +67,27 @@ class XbitoPomodoro(QMainWindow):
 
         self.layout.addWidget(self.timer_type_label)
 
-        # Create a horizontal layout for buttons and the countdown label
-        self.controls_layout = QHBoxLayout()
+    def setup_timer(self):
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.update_progress_bar)
+        self.update_timer.start(60000)  # Update every minute
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.auto_update_countdown)
 
+    def setup_start_pause_button(self):
+        self.start_pause_button = QPushButton("Start")
+        self.start_pause_button.setStyleSheet("font-size: 18px; padding: 5px;")
+        self.start_pause_button.clicked.connect(self.toggle_timer)
+        self.layout.addWidget(self.start_pause_button)
+
+        # Adding a Reset button
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.setStyleSheet("font-size: 18px; padding: 5px;")
+        self.reset_button.clicked.connect(self.reset_timer)
+        self.layout.addWidget(self.reset_button)
+
+    def setup_controls_layout(self):
+        self.controls_layout = QHBoxLayout()
         # Create control buttons
         self.reverse_button = QPushButton("-")
         self.fast_reverse_button = QPushButton("--")
@@ -95,34 +108,13 @@ class XbitoPomodoro(QMainWindow):
         self.countdown_label.setAlignment(Qt.AlignCenter)
         # Add the countdown label to the controls layout
         self.controls_layout.addWidget(self.countdown_label)
-
         self.controls_layout.addWidget(self.forward_button)
         self.controls_layout.addWidget(self.fast_forward_button)
 
         # Add the controls layout to the main layout
         self.layout.addLayout(self.controls_layout)
 
-        self.start_pause_button = QPushButton("Start")
-        self.start_pause_button.setStyleSheet("font-size: 18px; padding: 5px;")
-        self.start_pause_button.clicked.connect(self.toggle_timer)
-        self.layout.addWidget(self.start_pause_button)
-
-        # Adding a Reset button
-        self.reset_button = QPushButton("Reset")
-        self.reset_button.setStyleSheet("font-size: 18px; padding: 5px;")
-        self.reset_button.clicked.connect(self.reset_timer)
-        self.layout.addWidget(self.reset_button)
-
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.auto_update_countdown)
-        self.initial_seconds = 1800  # 30 minutes
-        self.rest_seconds = 300  # 5 minutes for Rest timer
-        self.remaining_seconds = self.initial_seconds
-        self.is_timer_running = False  # Track timer state
-
-        self.layout.addStretch(1)
-
-        # Emoticon buttons for feedback
+    def setup_emoticon_buttons(self):
         self.happy_button = QPushButton("😊")
         self.sad_button = QPushButton("😞")
         self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
@@ -132,11 +124,23 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addWidget(self.sad_button)
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
-        # Display the motivational phrase
-        self.show_motivational_phrase()
-        self.apply_dark_theme()
 
-    def show_motivational_phrase(self):
+    def setup_window(self):
+        self.setWindowTitle("Xbito - Pomodoro Timer")
+        self.setGeometry(100, 100, 380, 115)  # Set maximum width to 380 pixels
+        self.setMaximumWidth(380)
+
+        # Positioning the window near the top right of the screen
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.geometry()
+        x = screen_geometry.width() * 0.9 - self.width()  # 10% from the right edge
+        y = screen_geometry.height() * 0.1  # 10% from the top
+        self.move(int(x), int(y))
+
+        # Set the window to always stay on top
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+
+    def setup_motivational_phrase(self):
         # Display motivational Phrase in the screen, allowing for multi-line if it exceeds the width
         self.motivational_phrase_label = QLabel(self.phrase)
         self.motivational_phrase_label.setWordWrap(True)  # Enable word wrapping
