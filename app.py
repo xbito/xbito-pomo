@@ -1,7 +1,5 @@
 import sys
 import logging
-import tempfile
-import os
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -15,15 +13,14 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QTimer, Qt, QDate
 from PySide6.QtGui import QColor, QPalette
 from pydub import AudioSegment
-from pydub.generators import Sine
 import simpleaudio as sa
 import sqlite3
 from datetime import datetime, time
-from math import log10
 
 from MultiColorProgressBar import MultiColorProgressBar
 from motivation import get_motivational_phrase
-import winsound
+
+from sound import play_melody
 
 
 def init_pomodoro_db():
@@ -50,49 +47,6 @@ def insert_pomodoro_session(start_time, end_time, feeling):
     )
     conn.commit()
     conn.close()
-
-
-def play_melody():
-    try:
-        logging.debug("Attempting to play melody.")
-        # Create a celebratory melody with a sequence of notes
-        durations = [250, 250, 300, 200, 250, 300, 450]  # Durations in milliseconds
-        notes = [
-            Sine(523),  # C5
-            Sine(587),  # D5
-            Sine(659),  # E5
-            Sine(784),  # G5
-            Sine(880),  # A5
-            Sine(988),  # B5
-            Sine(1046),  # C6
-        ]
-
-        # Initial and final volumes as a percentage
-        initial_volume = 0.1
-        final_volume = 0.5
-
-        # Calculate the volume increase per note
-        volume_step = (final_volume - initial_volume) / (len(notes) - 1)
-        segments = []
-
-        for i, note in enumerate(notes):
-            volume = initial_volume + i * volume_step
-            segment = note.to_audio_segment(duration=durations[i]).apply_gain(
-                20 * log10(volume)
-            )
-            segments.append(segment)
-
-        melody = sum(segments)
-        # Save the generated melody to a temporary WAV file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
-            melody.export(tmpfile.name, format="wav")
-            # Play the WAV file
-            winsound.PlaySound(tmpfile.name, winsound.SND_FILENAME)
-            logging.debug("Melody finished playing.")
-        # Clean up the temporary file
-        os.remove(tmpfile.name)
-    except Exception as e:
-        logging.error("Error occurred while attempting to play melody: %s", e)
 
 
 class XbitoPomodoro(QMainWindow):
