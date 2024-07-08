@@ -38,7 +38,6 @@ class XbitoPomodoro(QMainWindow):
         centralWidget = QWidget()
         self.layout = QVBoxLayout(centralWidget)
         self.layout.addStretch(1)
-        self.setLayout(self.layout)
         self.init_date_day_label()
         self.init_progress_bar()
         self.update_progress_bar()
@@ -110,7 +109,6 @@ class XbitoPomodoro(QMainWindow):
         self.controls_layout.addWidget(self.countdown_label)
         self.controls_layout.addWidget(self.forward_button)
         self.controls_layout.addWidget(self.fast_forward_button)
-
         # Add the controls layout to the main layout
         self.layout.addLayout(self.controls_layout)
 
@@ -129,14 +127,12 @@ class XbitoPomodoro(QMainWindow):
         self.setWindowTitle("Xbito - Pomodoro Timer")
         self.setGeometry(100, 100, 380, 115)  # Set maximum width to 380 pixels
         self.setMaximumWidth(380)
-
         # Positioning the window near the top right of the screen
         screen = QApplication.primaryScreen()
         screen_geometry = screen.geometry()
         x = screen_geometry.width() * 0.9 - self.width()  # 10% from the right edge
         y = screen_geometry.height() * 0.1  # 10% from the top
         self.move(int(x), int(y))
-
         # Set the window to always stay on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
