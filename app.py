@@ -11,10 +11,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 from PySide6.QtCore import QTimer, Qt, QDate
-from PySide6.QtGui import QColor, QPalette
-from pydub import AudioSegment
-import simpleaudio as sa
-import sqlite3
 from datetime import datetime, time
 
 from MultiColorProgressBar import MultiColorProgressBar
