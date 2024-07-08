@@ -38,8 +38,8 @@ class XbitoPomodoro(QMainWindow):
         centralWidget = QWidget()
         self.layout = QVBoxLayout(centralWidget)
         self.layout.addStretch(1)
-        self.init_date_day_label()
-        self.init_progress_bar()
+        self.setup_date_day_label()
+        self.setup_progress_bar()
         self.update_progress_bar()
         self.setCentralWidget(centralWidget)
         # Update the progress bar and date/day label every minute
@@ -263,7 +263,13 @@ class XbitoPomodoro(QMainWindow):
             self.start_time = None  # Reset start time after recording feedback
             self.reset_timer()
 
-    def init_date_day_label(self):
+    def setup_date_day_label(self):
+        """
+        Initializes the date and day labels.
+
+        This method gets the current date and formats it into separate labels for the day, date, month, and year.
+        It also sets the styles and alignments for each label, and adds them to the main layout of the dialog.
+        """
         # Get the current date
         current_date = QDate.currentDate()
 
@@ -311,11 +317,19 @@ class XbitoPomodoro(QMainWindow):
         # Add the date and day layout to the main layout of the dialog
         self.layout.addLayout(date_day_layout)
 
-    def init_progress_bar(self):
+    def setup_progress_bar(self):
         self.progress_bar = MultiColorProgressBar(self)
         self.layout.addWidget(self.progress_bar)
 
     def update_progress_bar(self):
+        """
+        Updates the progress bar based on the current time.
+
+        The progress bar represents the progress of the day, from 5 AM to 11 PM.
+        If the current time is before 5 AM, the progress is 0.
+        If the current time is after 11 PM, the progress is 100.
+        Otherwise, the progress is calculated based on the current time compared to the start and end time of the day.
+        """
         current_time = datetime.now()
         start_time = datetime.combine(
             current_time.date(), time(5, 0)
