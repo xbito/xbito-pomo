@@ -59,6 +59,17 @@ class XbitoPomodoro(QMainWindow):
         y = screen_geometry.height() * 0.1  # 10% from the top
         self.move(int(x), int(y))
 
+        self.timer_type = "Focus"  # Attribute to track the current timer type
+        self.timer_type_label = QLabel(
+            self.timer_type
+        )  # Display the timer type in the UI
+        self.timer_type_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        self.timer_type_label.setAlignment(
+            Qt.AlignCenter
+        )  # Center-align the timer type label
+
+        self.layout.addWidget(self.timer_type_label)
+
         # Create a horizontal layout for buttons and the countdown label
         self.controls_layout = QHBoxLayout()
 
@@ -103,6 +114,7 @@ class XbitoPomodoro(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_countdown)
         self.initial_seconds = 1800  # 30 minutes
+        self.rest_seconds = 300  # 5 minutes for Rest timer
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
 
@@ -133,9 +145,7 @@ class XbitoPomodoro(QMainWindow):
 
     def toggle_timer(self):
         if not self.is_timer_running:
-            self.start_time = datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )  # Store start time
+            self.start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.is_timer_running:
             self.timer.stop()
             self.start_pause_button.setText("Start")
@@ -153,9 +163,6 @@ class XbitoPomodoro(QMainWindow):
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
         if self.remaining_seconds <= 0:
-            logging.debug(
-                "Timer completed. Stopping timer and attempting to play melody."
-            )
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
@@ -165,11 +172,10 @@ class XbitoPomodoro(QMainWindow):
                 play_melody()
             except Exception as e:
                 logging.error(f"Error playing melody: {e}")
-            logging.debug("Completed timer handling logic after melody.")
 
     def reset_timer(self):
         self.timer.stop()
-        self.remaining_seconds = self.initial_seconds
+        self.remaining_seconds = self.initial_seconds  # Reset to Focus timer duration
         self.countdown_label.setText("30:00")
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
