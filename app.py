@@ -53,6 +53,7 @@ class XbitoPomodoro(QMainWindow):
         self.setup_emoticon_buttons()
         self.setup_motivational_phrase()
         self.apply_dark_theme()
+        self.adjustSize()
 
     def setup_timer_type_label(self):
         self.timer_type = "Focus"  # Attribute to track the current timer type
@@ -125,7 +126,9 @@ class XbitoPomodoro(QMainWindow):
 
     def setup_window(self):
         self.setWindowTitle("Xbito - Pomodoro Timer")
-        self.setGeometry(100, 100, 380, 115)  # Set maximum width to 380 pixels
+        # Set the window to a fixed width of 380 pixels
+        self.setMinimumWidth(380)
+        self.setGeometry(100, 100, 380, 115)
         self.setMaximumWidth(380)
         # Positioning the window near the top right of the screen
         screen = QApplication.primaryScreen()
