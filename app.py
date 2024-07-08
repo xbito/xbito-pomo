@@ -81,10 +81,10 @@ class XbitoPomodoro(QMainWindow):
         self.forward_button = QPushButton("+")
         self.fast_forward_button = QPushButton("++")
 
-        self.reverse_button.clicked.connect(lambda: self.adjust_timer(-1))
-        self.fast_reverse_button.clicked.connect(lambda: self.adjust_timer(-5))
-        self.forward_button.clicked.connect(lambda: self.adjust_timer(1))
-        self.fast_forward_button.clicked.connect(lambda: self.adjust_timer(5))
+        self.reverse_button.clicked.connect(lambda: self.manually_adjust_timer(-1))
+        self.fast_reverse_button.clicked.connect(lambda: self.manually_adjust_timer(-5))
+        self.forward_button.clicked.connect(lambda: self.manually_adjust_timer(1))
+        self.fast_forward_button.clicked.connect(lambda: self.manually_adjust_timer(5))
 
         # Add buttons to the controls layout
         self.controls_layout.addWidget(self.fast_reverse_button)
@@ -114,7 +114,7 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addWidget(self.reset_button)
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_countdown)
+        self.timer.timeout.connect(self.auto_update_countdown)
         self.initial_seconds = 1800  # 30 minutes
         self.rest_seconds = 300  # 5 minutes for Rest timer
         self.remaining_seconds = self.initial_seconds
@@ -147,6 +147,16 @@ class XbitoPomodoro(QMainWindow):
         self.layout.insertWidget(0, self.motivational_phrase_label)
 
     def toggle_timer(self):
+        """
+        Toggles the timer on or off.
+
+        If the timer is not running, it starts the timer and sets the start time.
+        If the timer is running, it stops the timer and enables the happy and sad buttons.
+        If the timer is paused, it resumes the timer and disables the happy and sad buttons.
+
+        Returns:
+            None
+        """
         if not self.is_timer_running:
             self.start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.is_timer_running:
@@ -161,7 +171,18 @@ class XbitoPomodoro(QMainWindow):
             self.sad_button.setEnabled(False)
         self.is_timer_running = not self.is_timer_running
 
-    def update_countdown(self):
+    def auto_update_countdown(self):
+        """
+        Automatically updates the countdown timer and handles actions when the timer reaches zero.
+
+        Decreases the remaining seconds by 1 and updates the countdown label with the new time.
+        If the remaining seconds reach zero:
+        - stops the timer
+        - changes the start/pause button text to "Start",
+        - enables the feedback buttons
+        - attempts to play a melody. If an error occurs while playing the melody, logs the error.
+
+        """
         self.remaining_seconds -= 1
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
@@ -169,14 +190,25 @@ class XbitoPomodoro(QMainWindow):
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
-            self.happy_button.setEnabled(True)
-            self.sad_button.setEnabled(True)
+            if self.timer_type == "Focus":
+                self.happy_button.setEnabled(True)
+                self.sad_button.setEnabled(True)
+                self.timer_type_label.setText("Next: Rest")
+                self.remaining_seconds = self.rest_seconds
+                self.countdown_label.setText("5:00")
             try:
                 play_melody()
             except Exception as e:
                 logging.error(f"Error playing melody: {e}")
 
     def reset_timer(self):
+        """
+        Resets the timer to its initial state.
+
+        This method stops the timer, resets the remaining seconds to the initial duration,
+        updates the countdown label and button text, disables the happy and sad buttons,
+        and sets the timer running flag to False.
+        """
         self.timer.stop()
         self.remaining_seconds = self.initial_seconds  # Reset to Focus timer duration
         self.countdown_label.setText("30:00")
@@ -185,7 +217,14 @@ class XbitoPomodoro(QMainWindow):
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
 
-    def adjust_timer(self, minutes_change):
+    def manually_adjust_timer(self, minutes_change):
+        """
+        Adjusts the timer by the specified number of minutes.
+
+        Args:
+            minutes_change (int): The number of minutes to adjust the timer by.
+
+        """
         # Convert minutes to seconds
         seconds_change = minutes_change * 60
         new_remaining_seconds = self.remaining_seconds + seconds_change
@@ -201,10 +240,20 @@ class XbitoPomodoro(QMainWindow):
         self.update_countdown_display()
 
     def update_countdown_display(self):
+        """
+        Updates the countdown display with the remaining time in minutes and seconds.
+        """
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
 
     def record_feedback(self, feeling):
+        """
+        Records the feedback for a completed pomodoro session.
+
+        Args:
+            feeling (str): The feeling associated with the completed session.
+
+        """
         if self.start_time:
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             insert_pomodoro_session(self.start_time, end_time, feeling)
