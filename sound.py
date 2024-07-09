@@ -8,7 +8,7 @@ import winsound
 from math import log10
 
 
-def play_melody():
+def play_celebratory_melody():
     try:
         logging.debug("Attempting to play melody.")
         # Create a celebratory melody with a sequence of notes

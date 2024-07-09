@@ -17,7 +17,7 @@ from MultiColorProgressBar import MultiColorProgressBar
 from db import init_pomodoro_db, insert_pomodoro_session
 from motivation import get_motivational_phrase
 
-from sound import play_melody
+from sound import play_celebratory_melody, play_rest_end_melody
 
 
 class XbitoPomodoro(QMainWindow):
@@ -193,6 +193,18 @@ class XbitoPomodoro(QMainWindow):
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
+            # Play the corresponding melody
+            if self.timer_type == "Focus":
+                try:
+                    play_celebratory_melody()
+                except Exception as e:
+                    logging.error(f"Error playing melody: {e}")
+            elif self.timer_type == "Rest":
+                try:
+                    play_rest_end_melody()
+                except Exception as e:
+                    logging.error(f"Error playing melody: {e}")
+            # Set up the next timer
             if self.timer_type == "Focus":
                 self.happy_button.setEnabled(True)
                 self.sad_button.setEnabled(True)
