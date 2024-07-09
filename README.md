@@ -24,6 +24,21 @@ Prompted by an LLM, the addition of a Pomodoro timer to the project was inspired
 - **Audio Notifications:** Get notified with a pleasant melody when it's time to start a break or resume working.
 
 
+## Distribute
+
+To convert the Python app to an executable (.exe) for distribution I have used PyInstaller.
+
+1. Install PyInstaller:
+   ```
+   pip install pyinstaller
+   ```
+2. Create the executable:
+   ```
+   pyinstaller --onefile --windowed app.py
+   ```
+3. The exe file will be in a dist folder in your project.
+4. Test the exe file.
+
 ## Contributing
 Contributions are welcome! Please feel free to submit a pull request or open an issue for any bugs or feature requests.
 
