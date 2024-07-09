@@ -172,6 +172,9 @@ class XbitoPomodoro(QMainWindow):
             self.start_pause_button.setText("Pause")
             self.happy_button.setEnabled(False)
             self.sad_button.setEnabled(False)
+            # If timer type label is "Next: Rest", change it to "Rest" when starting the timer
+            if self.timer_type_label.text() == "Next: Rest":
+                self.timer_type_label.setText("Rest")
         self.is_timer_running = not self.is_timer_running
 
     def auto_update_countdown(self):
@@ -211,10 +214,10 @@ class XbitoPomodoro(QMainWindow):
                 self.timer_type_label.setText("Next: Rest")
                 self.remaining_seconds = self.rest_seconds
                 self.countdown_label.setText("5:00")
-            try:
-                play_melody()
-            except Exception as e:
-                logging.error(f"Error playing melody: {e}")
+            elif self.timer_type == "Rest":
+                self.timer_type_label.setText("Focus")
+                self.remaining_seconds = self.initial_seconds
+                self.countdown_label.setText("30:00")
 
     def reset_timer(self):
         """
@@ -231,6 +234,9 @@ class XbitoPomodoro(QMainWindow):
         self.is_timer_running = False
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
+        # On Reset always set the timer type to Focus
+        self.timer_type = "Focus"
+        self.timer_type_label.setText("Focus")
 
     def manually_adjust_timer(self, minutes_change):
         """
