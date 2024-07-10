@@ -270,7 +270,7 @@ class XbitoPomodoro(QMainWindow):
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
             # Play the corresponding melody
-            print("Playing melody: ", self.timer_type)
+            logging.debug("Playing melody: ", self.timer_type)
             if self.timer_type == "Focus":
                 try:
                     play_celebratory_melody()
