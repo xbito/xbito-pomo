@@ -37,7 +37,6 @@ class XbitoPomodoro(QMainWindow):
         # Create a central widget and layout
         centralWidget = QWidget()
         self.layout = QVBoxLayout(centralWidget)
-        self.layout.addStretch(1)
         self.setup_date_day_label()
         self.setup_progress_bar()
         self.update_progress_bar()
@@ -49,7 +48,6 @@ class XbitoPomodoro(QMainWindow):
         # Create a horizontal layout for buttons and the countdown label
         self.setup_controls_layout()
         self.setup_start_pause_button()
-        self.layout.addStretch(1)
         self.setup_emoticon_buttons()
         self.setup_motivational_phrase()
         self.apply_dark_theme()
