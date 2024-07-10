@@ -81,13 +81,13 @@ def play_rest_end_melody():
             segments.append(segment)
 
         melody = sum(segments)
-        play_obj = sa.play_buffer(
-            melody.raw_data,
-            num_channels=1,
-            bytes_per_sample=2,
-            sample_rate=melody.frame_rate,
-        )
-        play_obj.wait_done()  # Wait for the melody to finish playing
-        logging.debug("Rest end melody finished playing.")
+        # Save the generated melody to a temporary WAV file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
+            melody.export(tmpfile.name, format="wav")
+            # Play the WAV file
+            winsound.PlaySound(tmpfile.name, winsound.SND_FILENAME)
+            logging.debug("Melody finished playing.")
+        # Clean up the temporary file
+        os.remove(tmpfile.name)
     except Exception as e:
         logging.error("Error occurred while attempting to play rest end melody: %s", e)
