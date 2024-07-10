@@ -111,7 +111,8 @@ class XbitoPomodoro(QMainWindow):
         self.controls_layout.addWidget(self.fast_reverse_button)
         self.controls_layout.addWidget(self.reverse_button)
 
-        self.countdown_label = QLabel("30:00")
+        minutes, seconds = divmod(self.remaining_seconds, 60)
+        self.countdown_label = QLabel(f"{minutes:02d}:{seconds:02d}")
         self.countdown_label.setStyleSheet("font-size: 24px;")
         self.countdown_label.setAlignment(Qt.AlignCenter)
         # Add the countdown label to the controls layout
@@ -256,8 +257,7 @@ class XbitoPomodoro(QMainWindow):
 
         """
         self.remaining_seconds -= 1
-        minutes, seconds = divmod(self.remaining_seconds, 60)
-        self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
+        self.update_countdown_display()
         if self.remaining_seconds <= 0:
             self.timer.stop()
             self.start_pause_button.setText("Start")
@@ -279,11 +279,11 @@ class XbitoPomodoro(QMainWindow):
                 self.sad_button.setEnabled(True)
                 self.timer_type_label.setText("Next: Rest")
                 self.remaining_seconds = self.rest_seconds
-                self.countdown_label.setText("5:00")
             elif self.timer_type == "Rest":
                 self.timer_type_label.setText("Focus")
                 self.remaining_seconds = self.initial_seconds
-                self.countdown_label.setText("30:00")
+            # Convert self.remaining_seconds to minutes and seconds for the countdown label
+            self.update_countdown_display()
 
     def reset_timer(self):
         """
@@ -295,7 +295,7 @@ class XbitoPomodoro(QMainWindow):
         """
         self.timer.stop()
         self.remaining_seconds = self.initial_seconds  # Reset to Focus timer duration
-        self.countdown_label.setText("30:00")
+        self.update_countdown_display()
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
         self.happy_button.setEnabled(False)
