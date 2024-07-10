@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 
@@ -25,8 +26,17 @@ class XbitoPomodoro(QMainWindow):
         self.phrase = phrase
         self.app = app
         self.start_time = None  # To store the session start time
-        self.initial_seconds = 1800  # 30 minutes
-        self.rest_seconds = 300  # 5 minutes for Rest timer
+        # Check if running in a debug session
+        if (
+            "TERM_PROGRAM" in os.environ.keys()
+            and os.environ["TERM_PROGRAM"] == "vscode"
+        ):
+            logging.debug("Running in debug mode.")
+            self.initial_seconds = 15  # 15 seconds for debug mode
+            self.rest_seconds = 15  # 15 seconds for Rest timer in debug mode
+        else:
+            self.initial_seconds = 1800  # 30 minutes
+            self.rest_seconds = 300  # 5 minutes for Rest timer
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
         # Initialize the database
