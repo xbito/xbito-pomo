@@ -293,7 +293,7 @@ class XbitoPomodoro(QMainWindow):
             # Convert self.remaining_seconds to minutes and seconds for the countdown label
             self.update_countdown_display()
 
-    def reset_timer(self):
+    def reset_timer(self, from_feedback=False):
         """
         Resets the timer to its initial state.
 
@@ -308,9 +308,10 @@ class XbitoPomodoro(QMainWindow):
         self.is_timer_running = False
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
-        # On Reset always set the timer type to Focus
-        self.timer_type = "Focus"
-        self.timer_type_label.setText("Focus")
+        if not from_feedback:
+            # On Reset always set the timer type to Focus, but if coming from Feedback let the natural flow go on.
+            self.timer_type = "Focus"
+            self.timer_type_label.setText("Focus")
 
     def manually_adjust_timer(self, minutes_change):
         """
@@ -353,7 +354,7 @@ class XbitoPomodoro(QMainWindow):
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             insert_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
-            self.reset_timer()
+            self.reset_timer(from_feedback=True)
 
     def update_progress_bar(self):
         """
