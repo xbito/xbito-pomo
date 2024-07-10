@@ -147,6 +147,64 @@ class XbitoPomodoro(QMainWindow):
         )
         self.layout.insertWidget(0, self.motivational_phrase_label)
 
+    def setup_date_day_label(self):
+        """
+        Initializes the date and day labels.
+
+        This method gets the current date and formats it into separate labels for the day, date, month, and year.
+        It also sets the styles and alignments for each label, and adds them to the main layout of the dialog.
+        """
+        # Get the current date
+        current_date = QDate.currentDate()
+
+        # Format the date
+        date_text = current_date.toString("dd")
+        month_text = current_date.toString("MMM")
+        year_text = current_date.toString("yyyy")
+        day_text = current_date.toString("dddd")
+
+        # Create labels
+        self.date_label = QLabel(date_text)
+        self.month_label = QLabel(month_text)
+        self.year_label = QLabel(year_text)
+        self.day_label = QLabel(day_text)
+
+        # Set styles
+        self.date_label.setStyleSheet(
+            "color: white; font-size: 60px; font-weight: bold;"
+        )
+        self.month_label.setStyleSheet(
+            "color: white; font-size: 20px; font-weight: bold;"
+        )
+        self.year_label.setStyleSheet("color: white; font-size: 20px;")
+        self.day_label.setStyleSheet("color: white; font-size: 20px;")
+
+        # Align text
+        self.date_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.month_label.setAlignment(Qt.AlignLeft)
+        self.year_label.setAlignment(Qt.AlignLeft)
+        self.day_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # Create date layout
+        date_layout = QVBoxLayout()
+        date_layout.addWidget(self.month_label)
+        date_layout.addWidget(self.year_label)
+        date_layout.setSpacing(2)  # Reduce space between month and year
+
+        # Create main layout for date and day
+        date_day_layout = QHBoxLayout()
+        date_day_layout.setSpacing(1)
+        date_day_layout.addWidget(self.date_label)
+        date_day_layout.addLayout(date_layout)
+        date_day_layout.addWidget(self.day_label)
+
+        # Add the date and day layout to the main layout of the dialog
+        self.layout.addLayout(date_day_layout)
+
+    def setup_progress_bar(self):
+        self.progress_bar = MultiColorProgressBar(self)
+        self.layout.addWidget(self.progress_bar)
+
     def toggle_timer(self):
         """
         Toggles the timer on or off.
@@ -278,64 +336,6 @@ class XbitoPomodoro(QMainWindow):
             insert_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
             self.reset_timer()
-
-    def setup_date_day_label(self):
-        """
-        Initializes the date and day labels.
-
-        This method gets the current date and formats it into separate labels for the day, date, month, and year.
-        It also sets the styles and alignments for each label, and adds them to the main layout of the dialog.
-        """
-        # Get the current date
-        current_date = QDate.currentDate()
-
-        # Format the date
-        date_text = current_date.toString("dd")
-        month_text = current_date.toString("MMM")
-        year_text = current_date.toString("yyyy")
-        day_text = current_date.toString("dddd")
-
-        # Create labels
-        self.date_label = QLabel(date_text)
-        self.month_label = QLabel(month_text)
-        self.year_label = QLabel(year_text)
-        self.day_label = QLabel(day_text)
-
-        # Set styles
-        self.date_label.setStyleSheet(
-            "color: white; font-size: 60px; font-weight: bold;"
-        )
-        self.month_label.setStyleSheet(
-            "color: white; font-size: 20px; font-weight: bold;"
-        )
-        self.year_label.setStyleSheet("color: white; font-size: 20px;")
-        self.day_label.setStyleSheet("color: white; font-size: 20px;")
-
-        # Align text
-        self.date_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.month_label.setAlignment(Qt.AlignLeft)
-        self.year_label.setAlignment(Qt.AlignLeft)
-        self.day_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Create date layout
-        date_layout = QVBoxLayout()
-        date_layout.addWidget(self.month_label)
-        date_layout.addWidget(self.year_label)
-        date_layout.setSpacing(2)  # Reduce space between month and year
-
-        # Create main layout for date and day
-        date_day_layout = QHBoxLayout()
-        date_day_layout.setSpacing(1)
-        date_day_layout.addWidget(self.date_label)
-        date_day_layout.addLayout(date_layout)
-        date_day_layout.addWidget(self.day_label)
-
-        # Add the date and day layout to the main layout of the dialog
-        self.layout.addLayout(date_day_layout)
-
-    def setup_progress_bar(self):
-        self.progress_bar = MultiColorProgressBar(self)
-        self.layout.addWidget(self.progress_bar)
 
     def update_progress_bar(self):
         """
