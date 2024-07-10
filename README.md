@@ -34,7 +34,7 @@ To convert the Python app to an executable (.exe) for distribution I have used P
    ```
 2. Create the executable:
    ```
-   pyinstaller --onefile --windowed app.py
+   pyinstaller --onefile --windowed --name xbitopomo app.py
    ```
 3. The exe file will be in a dist folder in your project.
 4. Test the exe file.
