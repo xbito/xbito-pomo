@@ -230,11 +230,13 @@ class XbitoPomodoro(QMainWindow):
         if not self.is_timer_running:
             self.start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.is_timer_running:
+            # The button is currentlty the Pause button
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.happy_button.setEnabled(True)
             self.sad_button.setEnabled(True)
         else:
+            # The button is currently the Start button
             self.timer.start(1000)  # Update every second
             self.start_pause_button.setText("Pause")
             self.happy_button.setEnabled(False)
@@ -242,6 +244,11 @@ class XbitoPomodoro(QMainWindow):
             # If timer type label is "Next: Rest", change it to "Rest" when starting the timer
             if self.timer_type_label.text() == "Next: Rest":
                 self.timer_type_label.setText("Rest")
+                self.timer_type = "Rest"
+            elif self.timer_type_label.text() == "Next: Focus":
+                self.timer_type_label.setText("Focus")
+                self.timer_type = "Focus"
+
         self.is_timer_running = not self.is_timer_running
 
     def auto_update_countdown(self):
@@ -263,6 +270,7 @@ class XbitoPomodoro(QMainWindow):
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
             # Play the corresponding melody
+            print("Playing melody: ", self.timer_type)
             if self.timer_type == "Focus":
                 try:
                     play_celebratory_melody()
@@ -280,7 +288,7 @@ class XbitoPomodoro(QMainWindow):
                 self.timer_type_label.setText("Next: Rest")
                 self.remaining_seconds = self.rest_seconds
             elif self.timer_type == "Rest":
-                self.timer_type_label.setText("Focus")
+                self.timer_type_label.setText("Next: Focus")
                 self.remaining_seconds = self.initial_seconds
             # Convert self.remaining_seconds to minutes and seconds for the countdown label
             self.update_countdown_display()
