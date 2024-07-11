@@ -33,7 +33,7 @@ class XbitoPomodoro(QMainWindow):
         ):
             logging.debug("Running in debug mode.")
             self.initial_seconds = 15  # 15 seconds for debug mode
-            self.rest_seconds = 15  # 15 seconds for Rest timer in debug mode
+            self.rest_seconds = 10  # 10 seconds for Rest timer in debug mode
         else:
             self.initial_seconds = 1800  # 30 minutes
             self.rest_seconds = 300  # 5 minutes for Rest timer
@@ -270,7 +270,7 @@ class XbitoPomodoro(QMainWindow):
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
             # Play the corresponding melody
-            logging.debug("Playing melody: ", self.timer_type)
+            logging.debug(f"Playing melody: {self.timer_type}")
             if self.timer_type == "Focus":
                 try:
                     play_celebratory_melody()
@@ -302,7 +302,15 @@ class XbitoPomodoro(QMainWindow):
         and sets the timer running flag to False.
         """
         self.timer.stop()
-        self.remaining_seconds = self.initial_seconds  # Reset to Focus timer duration
+        # If the label is "Next: Rest" set the remaining seconds to the Rest timer duration
+        # If the label is "Next: Focus" set the remaining seconds to the Focus timer duration
+        if self.timer_type_label.text() == "Next: Rest":
+            self.remaining_seconds = self.rest_seconds
+        elif self.timer_type_label.text() == "Next: Focus":
+            self.remaining_seconds = self.initial_seconds
+        else:
+            # Reset happened somewhere else, not at the end of a session, so reset to the Focus timer duration
+            self.remaining_seconds = self.initial_seconds
         self.update_countdown_display()
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
