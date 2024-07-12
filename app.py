@@ -128,8 +128,10 @@ class XbitoPomodoro(QMainWindow):
         self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
         self.sad_button.clicked.connect(lambda: self.record_feedback("sad"))
         # Add emoticon buttons to the layout
-        self.layout.addWidget(self.happy_button)
-        self.layout.addWidget(self.sad_button)
+        self.button_layout = QHBoxLayout()
+        self.button_layout.addWidget(self.happy_button)
+        self.button_layout.addWidget(self.sad_button)
+        self.layout.addLayout(self.button_layout)
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
 
