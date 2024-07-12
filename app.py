@@ -34,9 +34,11 @@ class XbitoPomodoro(QMainWindow):
             logging.debug("Running in debug mode.")
             self.initial_seconds = 15  # 15 seconds for debug mode
             self.rest_seconds = 10  # 10 seconds for Rest timer in debug mode
+            self.long_rest_seconds = 20  # 20 seconds for Long Rest timer in debug mode
         else:
             self.initial_seconds = 1800  # 30 minutes
             self.rest_seconds = 300  # 5 minutes for Rest timer
+            self.long_rest_seconds = 900  # 15 minutes for Long Rest timer
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
         # Initialize the database
