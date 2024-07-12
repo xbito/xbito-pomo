@@ -88,13 +88,16 @@ class XbitoPomodoro(QMainWindow):
         self.start_pause_button = QPushButton("Start")
         self.start_pause_button.setStyleSheet("font-size: 18px; padding: 5px;")
         self.start_pause_button.clicked.connect(self.toggle_timer)
-        self.layout.addWidget(self.start_pause_button)
 
-        # Adding a Reset button
         self.reset_button = QPushButton("Reset")
         self.reset_button.setStyleSheet("font-size: 18px; padding: 5px;")
         self.reset_button.clicked.connect(self.reset_timer)
-        self.layout.addWidget(self.reset_button)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.start_pause_button, 1)
+        button_layout.addWidget(self.reset_button, 1)
+
+        self.layout.addLayout(button_layout)
 
     def setup_controls_layout(self):
         self.controls_layout = QHBoxLayout()
@@ -125,8 +128,8 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addLayout(self.controls_layout)
 
     def setup_emoticon_buttons(self):
-        self.happy_button = QPushButton("😊")
-        self.sad_button = QPushButton("😞")
+        self.happy_button = QPushButton("👍")
+        self.sad_button = QPushButton("👎")
         self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
         self.sad_button.clicked.connect(lambda: self.record_feedback("sad"))
         # Add emoticon buttons to the layout
@@ -136,6 +139,9 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addLayout(self.button_layout)
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
+        # Add tooltips to the emoticon buttons
+        self.happy_button.setToolTip("Happy/Positive")
+        self.sad_button.setToolTip("Sad/Negative")
 
     def setup_window(self):
         self.setWindowTitle("Xbito - Pomodoro Timer")
