@@ -15,7 +15,7 @@ from PySide6.QtCore import QTimer, Qt, QDate
 from datetime import datetime, time
 
 from MultiColorProgressBar import MultiColorProgressBar
-from db import init_pomodoro_db, insert_pomodoro_session
+from db import init_pomodoro_db, insert_pomodoro_session, update_pomodoro_session
 from motivation import get_motivational_phrase
 
 from sound import play_celebratory_melody, play_rest_end_melody
@@ -258,6 +258,9 @@ class XbitoPomodoro(QMainWindow):
             elif self.timer_type_label.text() == "Next: Focus":
                 self.timer_type_label.setText("Focus")
                 self.timer_type = "Focus"
+            # If after changing the timer_type it is Focus then record the start time
+            if self.timer_type == "Focus":
+                insert_pomodoro_session(self.start_time, None, "pending")
 
         self.is_timer_running = not self.is_timer_running
 
@@ -282,6 +285,12 @@ class XbitoPomodoro(QMainWindow):
             # Play the corresponding melody
             logging.debug(f"Playing melody: {self.timer_type}")
             if self.timer_type == "Focus":
+                # Record the session as completed
+                update_pomodoro_session(
+                    self.start_time,
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "pending",
+                )
                 try:
                     play_celebratory_melody()
                 except Exception as e:
@@ -370,7 +379,7 @@ class XbitoPomodoro(QMainWindow):
         """
         if self.start_time:
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            insert_pomodoro_session(self.start_time, end_time, feeling)
+            update_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
             self.reset_timer(from_feedback=True)
 

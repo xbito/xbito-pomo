@@ -25,3 +25,17 @@ def insert_pomodoro_session(start_time, end_time, feeling):
     )
     conn.commit()
     conn.close()
+
+
+def update_pomodoro_session(start_time, end_time, feeling):
+    if not start_time:
+        return  # Do not proceed if start_time is not set
+    # Function to insert a session record into the database
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute(
+        "UPDATE session_feedback SET end_time = ?, feeling = ? WHERE start_time = ?",
+        (end_time, feeling, start_time),
+    )
+    conn.commit()
+    conn.close()
