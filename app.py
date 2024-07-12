@@ -156,7 +156,7 @@ class XbitoPomodoro(QMainWindow):
         self.motivational_phrase_label.setWordWrap(True)  # Enable word wrapping
         self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
         self.motivational_phrase_label.setStyleSheet(
-            "font-size: 16px; font-weight: bold;"
+            "font-size: 15px; font-weight: bold;"
         )
         self.layout.insertWidget(0, self.motivational_phrase_label)
 
@@ -184,13 +184,13 @@ class XbitoPomodoro(QMainWindow):
 
         # Set styles
         self.date_label.setStyleSheet(
-            "color: white; font-size: 60px; font-weight: bold;"
+            "color: white; font-size: 50px; font-weight: bold;"
         )
         self.month_label.setStyleSheet(
-            "color: white; font-size: 20px; font-weight: bold;"
+            "color: white; font-size: 18px; font-weight: bold;"
         )
-        self.year_label.setStyleSheet("color: white; font-size: 20px;")
-        self.day_label.setStyleSheet("color: white; font-size: 20px;")
+        self.year_label.setStyleSheet("color: white; font-size: 18px;")
+        self.day_label.setStyleSheet("color: white; font-size: 18px;")
 
         # Align text
         self.date_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
