@@ -10,8 +10,11 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QWidget,
+    QDialog,
 )
 from PySide6.QtCore import QTimer, Qt, QDate
+from PySide6.QtGui import QAction
+
 from datetime import datetime, time
 
 from MultiColorProgressBar import MultiColorProgressBar
@@ -62,8 +65,22 @@ class XbitoPomodoro(QMainWindow):
         self.setup_start_pause_button()
         self.setup_emoticon_buttons()
         self.setup_motivational_phrase()
+        self.setup_menu()
         self.apply_dark_theme()
         self.adjustSize()
+
+    def setup_menu(self):
+        # Create a menu bar with an About action and a Settings action
+        menu_bar = self.menuBar()
+        menu = menu_bar.addMenu("Menu")
+
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about_dialog)
+        menu.addAction(about_action)
+
+        settings_action = QAction("Settings", self)
+        settings_action.triggered.connect(self.show_settings_dialog)
+        menu.addAction(settings_action)
 
     def setup_timer_type_label(self):
         self.timer_type = "Focus"  # Attribute to track the current timer type
@@ -443,8 +460,52 @@ class XbitoPomodoro(QMainWindow):
                 background-color: #22aa22;
                 width: 20px; /* Used to increase chunk size */
             }
+            QDialog {
+                background-color: #333333;
+                color: #ffffff;
+            }
         """
         )
+
+    def show_dialog(self, title, text):
+        """
+        Displays a dialog with the specified title and text.
+
+        Args:
+            title (str): The title of the dialog.
+            text (str): The text content of the dialog.
+
+        """
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        layout = QVBoxLayout()
+        label = QLabel(text)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_about_dialog(self):
+        """
+        Displays an About dialog with information about the application.
+        """
+        about_text = """
+        <h1>Xbito - Pomodoro Timer</h1>
+        <p>Version 1.0</p>
+        <p>Developed by Xbito</p>
+        <p>Visit us at <a href="https://github.com/xbito/xbito-pomo">Github</a></p>
+        """
+        self.show_dialog("About", about_text)
+
+    def show_settings_dialog(self):
+        """
+        Displays a Settings dialog with options to configure the application.
+        """
+        settings_text = """
+        <h1>Settings</h1>
+        <p>Coming soon...</p>
+        """
+        self.show_dialog("Settings", settings_text)
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
