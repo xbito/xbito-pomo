@@ -47,7 +47,6 @@ class XbitoPomodoro(QMainWindow):
         # Initialize the database
         init_pomodoro_db()
         super().__init__()
-        ## Window Setup
         self.setup_window()
         # Create a central widget and layout
         centralWidget = QWidget()
@@ -56,11 +55,8 @@ class XbitoPomodoro(QMainWindow):
         self.setup_progress_bar()
         self.update_progress_bar()
         self.setCentralWidget(centralWidget)
-        # Update the progress bar and date/day label every minute
         self.setup_timer()
-        # Create a label to display the timer type (Focus/Rest)
         self.setup_timer_type_label()
-        # Create a horizontal layout for buttons and the countdown label
         self.setup_controls_layout()
         self.setup_start_pause_button()
         self.setup_emoticon_buttons()
@@ -70,7 +66,9 @@ class XbitoPomodoro(QMainWindow):
         self.adjustSize()
 
     def setup_menu(self):
-        # Create a menu bar with an About action and a Settings action
+        """
+        Sets up the menu bar with the About and Settings actions.
+        """
         menu_bar = self.menuBar()
         menu = menu_bar.addMenu("Menu")
 
@@ -83,6 +81,14 @@ class XbitoPomodoro(QMainWindow):
         menu.addAction(settings_action)
 
     def setup_timer_type_label(self):
+        """
+        Sets up the timer type label in the UI.
+
+        This method creates a QLabel widget to display the current timer type in the UI.
+        It sets the initial timer type to "Focus" and applies the necessary styling and alignment.
+        The QLabel widget is then added to the layout.
+
+        """
         self.timer_type = "Focus"  # Attribute to track the current timer type
         self.timer_type_label = QLabel(
             self.timer_type
@@ -95,6 +101,13 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addWidget(self.timer_type_label)
 
     def setup_timer(self):
+        """
+        Sets up the timer for updating the progress bar and countdown.
+
+        This method creates two QTimer objects: `update_timer` and `timer`.
+        The `update_timer` is used to update the progress bar every minute,
+        while the `timer` is used to automatically update the countdown.
+        """
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_progress_bar)
         self.update_timer.start(60000)  # Update every minute
@@ -102,6 +115,12 @@ class XbitoPomodoro(QMainWindow):
         self.timer.timeout.connect(self.auto_update_countdown)
 
     def setup_start_pause_button(self):
+        """
+        Set up the start/pause button and reset button.
+
+        This method creates the start/pause button and reset button, sets their styles,
+        and connects them to their respective functions.
+        """
         self.start_pause_button = QPushButton("Start")
         self.start_pause_button.setStyleSheet("font-size: 18px; padding: 5px;")
         self.start_pause_button.clicked.connect(self.toggle_timer)
@@ -117,6 +136,12 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addLayout(button_layout)
 
     def setup_controls_layout(self):
+        """
+        Set up the controls layout for the application.
+
+        This method creates control buttons for adjusting the timer, adds a countdown label,
+        and adds all the controls to the main layout.
+        """
         self.controls_layout = QHBoxLayout()
         # Create control buttons
         self.reverse_button = QPushButton("-")
@@ -145,6 +170,12 @@ class XbitoPomodoro(QMainWindow):
         self.layout.addLayout(self.controls_layout)
 
     def setup_emoticon_buttons(self):
+        """
+        Set up the emoticon buttons in the user interface.
+        Connect the buttons to the corresponding feedback recording functions.
+        Enable/disable the buttons based on the application's state.
+        Add tooltips to the buttons.
+        """
         self.happy_button = QPushButton("👍")
         self.sad_button = QPushButton("👎")
         self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
@@ -161,6 +192,11 @@ class XbitoPomodoro(QMainWindow):
         self.sad_button.setToolTip("Sad/Negative")
 
     def setup_window(self):
+        """
+        Set up the window properties and position.
+
+        This method sets the window title, width, height, position, and flags.
+        """
         self.setWindowTitle("Xbito - Pomodoro Timer")
         # Set the window to a fixed width of 380 pixels
         self.setMinimumWidth(380)
