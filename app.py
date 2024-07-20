@@ -38,10 +38,12 @@ class XbitoPomodoro(QMainWindow):
             self.initial_seconds = 15  # 15 seconds for debug mode
             self.rest_seconds = 10  # 10 seconds for Rest timer in debug mode
             self.long_rest_seconds = 20  # 20 seconds for Long Rest timer in debug mode
+            self.update_motivational_phrase_seconds = 30  # 30 seconds for debug mode
         else:
             self.initial_seconds = 1800  # 30 minutes
             self.rest_seconds = 300  # 5 minutes for Rest timer
             self.long_rest_seconds = 900  # 15 minutes for Long Rest timer
+            self.update_motivational_phrase_seconds = 21600  # 6 hours
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
         # Initialize the database
@@ -212,7 +214,12 @@ class XbitoPomodoro(QMainWindow):
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
     def setup_motivational_phrase(self):
-        # Display motivational Phrase in the screen, allowing for multi-line if it exceeds the width
+        """
+        Display motivational Phrase in the screen, allowing for multi-line if it exceeds the width.
+        When the phrase is too long, it will wrap to the next line.
+
+        Add a timer to update the motivational phrase every 6 hours.
+        """
         self.motivational_phrase_label = QLabel(self.phrase)
         self.motivational_phrase_label.setWordWrap(True)  # Enable word wrapping
         self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
@@ -220,6 +227,22 @@ class XbitoPomodoro(QMainWindow):
             "font-size: 15px; font-weight: bold;"
         )
         self.layout.insertWidget(0, self.motivational_phrase_label)
+        self.update_motivational_phrase_timer = QTimer(self)
+        self.update_motivational_phrase_timer.timeout.connect(
+            self.update_motivational_phrase
+        )
+        self.update_motivational_phrase_timer.start(
+            self.update_motivational_phrase_seconds * 1000
+        )  # Update every 6 hours
+
+    def update_motivational_phrase(self):
+        """
+        Update the motivational phrase displayed in the UI.
+
+        This method fetches a new motivational phrase and updates the label in the UI.
+        """
+        self.phrase = get_motivational_phrase()
+        self.motivational_phrase_label.setText(self.phrase)
 
     def setup_date_day_label(self):
         """
