@@ -464,6 +464,29 @@ class XbitoPomodoro(QMainWindow):
                 background-color: #333333;
                 color: #ffffff;
             }
+
+            QLabel {
+                color: #ffffff;
+            }
+
+            QLabel#about_title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+
+            QLabel#about_text {
+                margin-bottom: 20px;
+            }
+
+            QLabel#about_link {
+                color: #22aa22;
+                text-decoration: none;
+            }
+
+            QLabel#about_link:hover {
+                text-decoration: underline;
+            }
         """
         )
 
@@ -491,8 +514,9 @@ class XbitoPomodoro(QMainWindow):
         """
         about_text = """
         <h1>Xbito - Pomodoro Timer</h1>
-        <p>Version 1.0</p>
-        <p>Developed by Xbito</p>
+        <p>Version 0.5</p>
+        <p>Developed by <a href="https://github.com/xbito/">Xbito</a></p>
+        <p>With help from GitHub Copilot</p>
         <p>Visit us at <a href="https://github.com/xbito/xbito-pomo">Github</a></p>
         """
         self.show_dialog("About", about_text)
