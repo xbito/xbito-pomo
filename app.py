@@ -1,6 +1,9 @@
 import os
 import sys
 import logging
+import threading
+
+from time import sleep
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -12,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QDialog,
 )
-from PySide6.QtCore import QTimer, Qt, QDate
+from PySide6.QtCore import QTimer, Qt, QDate, QEvent
 from PySide6.QtGui import QAction
 
 from datetime import datetime, time
@@ -81,6 +84,24 @@ class XbitoPomodoro(QMainWindow):
         settings_action = QAction("Settings", self)
         settings_action.triggered.connect(self.show_settings_dialog)
         menu.addAction(settings_action)
+
+        send_to_back_action = QAction("Send to Back", self)
+        send_to_back_action.triggered.connect(self.send_to_back)
+        menu.addAction(send_to_back_action)
+
+    def send_to_back(self):
+        """
+        Sends the application window to the back of the screen.
+        """
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, False)
+        QTimer.singleShot(15000, self.bring_to_front_delayed)
+
+    def bring_to_front_delayed(self):
+        """
+        Brings the application window to the front after a short delay.
+        """
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+        self.show()
 
     def setup_timer_type_label(self):
         """
