@@ -14,6 +14,10 @@ from PySide6.QtWidgets import (
     QLabel,
     QWidget,
     QDialog,
+    QTableWidget,
+    QTableWidgetItem,
+    QAbstractItemView,
+    QHeaderView,
 )
 from PySide6.QtCore import QTimer, Qt, QDate, QEvent
 from PySide6.QtGui import QAction
@@ -21,7 +25,12 @@ from PySide6.QtGui import QAction
 from datetime import datetime, time
 
 from MultiColorProgressBar import MultiColorProgressBar
-from db import init_pomodoro_db, insert_pomodoro_session, update_pomodoro_session
+from db import (
+    init_pomodoro_db,
+    insert_pomodoro_session,
+    update_pomodoro_session,
+    fetch_last_10_report_sessions,
+)
 from motivation import get_motivational_phrase
 
 from sound import play_celebratory_melody, play_rest_end_melody
@@ -85,9 +94,99 @@ class XbitoPomodoro(QMainWindow):
         settings_action.triggered.connect(self.show_settings_dialog)
         menu.addAction(settings_action)
 
+        report_action = QAction("Report", self)
+        report_action.triggered.connect(self.show_report_dialog)
+        menu.addAction(report_action)
+
         send_to_back_action = QAction("Send to Back", self)
         send_to_back_action.triggered.connect(self.send_to_back)
         menu.addAction(send_to_back_action)
+
+    def show_report_dialog(self):
+        """
+        Displays a report Dialog with some basic reporting data.
+        """
+        # Create a QDialog object for the report dialog
+        report_dialog = QDialog(self)
+        report_dialog.setWindowTitle("Report")
+        report_dialog.setMinimumWidth(550)  # Set a minimum width for the dialog
+        report_dialog.setMinimumHeight(500)  # Set a minimum height for the dialog
+
+        # Create a QVBoxLayout for the report dialog
+        layout = QVBoxLayout()
+
+        # Add a title and subtitle with a more sophisticated layout
+        title_layout = QVBoxLayout()
+        title_label = QLabel("<h1>Report</h1>")
+        title_label.setAlignment(Qt.AlignCenter)
+        subtitle_label = QLabel("<p>Last 10 Sessions</p>")
+        subtitle_label.setAlignment(Qt.AlignCenter)
+        title_layout.addWidget(title_label)
+        title_layout.addWidget(subtitle_label)
+        layout.addLayout(title_layout)
+
+        # Create a QTableWidget to display the report data
+        table_widget = QTableWidget()
+        table_widget.setColumnCount(3)
+        table_widget.setHorizontalHeaderLabels(["Start Time", "End Time", "Feeling"])
+
+        # Fetch the last 10 report sessions from the database
+        report_sessions = fetch_last_10_report_sessions()
+
+        # Populate the table with the report session details
+        table_widget.setRowCount(len(report_sessions))
+        for row, session in enumerate(report_sessions):
+            start_time = QTableWidgetItem(session["start_time"])
+            end_time = QTableWidgetItem(session["end_time"])
+            feeling = QTableWidgetItem(str(session["feeling"]))
+
+            table_widget.setItem(row, 0, start_time)
+            table_widget.setItem(row, 1, end_time)
+            table_widget.setItem(row, 2, feeling)
+
+        # Set the table widget properties
+        table_widget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        table_widget.setSelectionBehavior(QAbstractItemView.SelectRows)
+        table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        table_widget.setAlternatingRowColors(True)
+        table_widget.setStyleSheet("QTableWidget { border: 1px solid #ddd; }")
+
+        # Adjust column widths to fit the date-time columns
+        table_widget.setColumnWidth(0, 200)  # Adjust width for "Start Time"
+        table_widget.setColumnWidth(1, 200)  # Adjust width for "End Time"
+
+        # Adjust row height to fit all rows within the dialog
+        table_widget.verticalHeader().setDefaultSectionSize(30)  # Adjust row height
+
+        # Add the table widget to the layout
+        layout.addWidget(table_widget)
+
+        # Add a close button with styling
+        close_button = QPushButton("Close")
+        close_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        close_button.clicked.connect(report_dialog.accept)
+        layout.addWidget(close_button)
+
+        # Set the layout for the report dialog
+        report_dialog.setLayout(layout)
+
+        # Show the report dialog
+        report_dialog.exec_()
 
     def send_to_back(self):
         """

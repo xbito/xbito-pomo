@@ -39,3 +39,18 @@ def update_pomodoro_session(start_time, end_time, feeling):
     )
     conn.commit()
     conn.close()
+
+
+def fetch_last_10_report_sessions():
+    # Function to fetch the last 10 sessions from the database
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn.row_factory = sqlite3.Row  # This allows us to access columns by name
+    c = conn.cursor()
+    c.execute(
+        "SELECT * FROM session_feedback WHERE end_time is not null ORDER BY start_time DESC LIMIT 10"
+    )
+    rows = c.fetchall()
+    conn.close()
+    # Convert rows to a list of dictionaries
+    sessions = [dict(row) for row in rows]
+    return sessions
