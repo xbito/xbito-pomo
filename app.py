@@ -56,6 +56,8 @@ class XbitoPomodoro(QMainWindow):
             self.rest_seconds = 300  # 5 minutes for Rest timer
             self.long_rest_seconds = 900  # 15 minutes for Long Rest timer
             self.update_motivational_phrase_seconds = 21600  # 6 hours
+        self.sessions_before_long_rest = 2  # Number of sessions before a long rest
+        self.completed_sessions = 0  # Track the number of completed sessions
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
         # Initialize the database
@@ -163,7 +165,8 @@ class XbitoPomodoro(QMainWindow):
 
         # Add a close button with styling
         close_button = QPushButton("Close")
-        close_button.setStyleSheet("""
+        close_button.setStyleSheet(
+            """
             QPushButton {
                 background-color: #4CAF50;
                 color: white;
@@ -178,7 +181,8 @@ class XbitoPomodoro(QMainWindow):
             QPushButton:hover {
                 background-color: #45a049;
             }
-        """)
+        """
+        )
         close_button.clicked.connect(report_dialog.accept)
         layout.addWidget(close_button)
 
@@ -448,7 +452,10 @@ class XbitoPomodoro(QMainWindow):
             self.happy_button.setEnabled(False)
             self.sad_button.setEnabled(False)
             # If timer type label is "Next: Rest", change it to "Rest" when starting the timer
-            if self.timer_type_label.text() == "Next: Rest":
+            if (
+                self.timer_type_label.text() == "Next: Rest"
+                or self.timer_type_label.text() == "Next: Long Rest"
+            ):
                 self.timer_type_label.setText("Rest")
                 self.timer_type = "Rest"
             elif self.timer_type_label.text() == "Next: Focus":
@@ -500,8 +507,13 @@ class XbitoPomodoro(QMainWindow):
             if self.timer_type == "Focus":
                 self.happy_button.setEnabled(True)
                 self.sad_button.setEnabled(True)
-                self.timer_type_label.setText("Next: Rest")
-                self.remaining_seconds = self.rest_seconds
+                self.completed_sessions += 1
+                if self.completed_sessions % self.sessions_before_long_rest == 0:
+                    self.timer_type_label.setText("Next: Long Rest")
+                    self.remaining_seconds = self.long_rest_seconds
+                else:
+                    self.timer_type_label.setText("Next: Rest")
+                    self.remaining_seconds = self.rest_seconds
             elif self.timer_type == "Rest":
                 self.timer_type_label.setText("Next: Focus")
                 self.remaining_seconds = self.initial_seconds
@@ -521,6 +533,8 @@ class XbitoPomodoro(QMainWindow):
         # If the label is "Next: Focus" set the remaining seconds to the Focus timer duration
         if self.timer_type_label.text() == "Next: Rest":
             self.remaining_seconds = self.rest_seconds
+        elif self.timer_type_label.text() == "Next: Long Rest":
+            self.remaining_seconds = self.long_rest_seconds
         elif self.timer_type_label.text() == "Next: Focus":
             self.remaining_seconds = self.initial_seconds
         else:
