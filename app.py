@@ -32,6 +32,7 @@ from db import (
     fetch_last_10_report_sessions,
 )
 from motivation import get_motivational_phrase
+from yoga import get_desk_yoga_stretch
 
 from sound import play_celebratory_melody, play_rest_end_melody
 
@@ -303,19 +304,31 @@ class XbitoPomodoro(QMainWindow):
         Add tooltips to the buttons.
         """
         self.happy_button = QPushButton("👍")
+        self.yoga_button = QPushButton("🧘")
         self.sad_button = QPushButton("👎")
         self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
+        self.yoga_button.clicked.connect(self.show_yoga_stretch)
         self.sad_button.clicked.connect(lambda: self.record_feedback("sad"))
         # Add emoticon buttons to the layout
         self.button_layout = QHBoxLayout()
         self.button_layout.addWidget(self.happy_button)
+        self.button_layout.addWidget(self.yoga_button)
         self.button_layout.addWidget(self.sad_button)
         self.layout.addLayout(self.button_layout)
         self.happy_button.setEnabled(False)
+        self.yoga_button.setEnabled(False)
         self.sad_button.setEnabled(False)
         # Add tooltips to the emoticon buttons
         self.happy_button.setToolTip("Happy/Positive")
+        self.yoga_button.setToolTip("Yoga Stretch")
         self.sad_button.setToolTip("Sad/Negative")
+
+    def show_yoga_stretch(self):
+        """
+        Displays a yoga stretch in a dialog box.
+        """
+        yoga_stretch = get_desk_yoga_stretch()
+        self.show_dialog("Desk Yoga Stretch", yoga_stretch)
 
     def setup_window(self):
         """
@@ -444,12 +457,14 @@ class XbitoPomodoro(QMainWindow):
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.happy_button.setEnabled(True)
+            self.yoga_button.setEnabled(True)
             self.sad_button.setEnabled(True)
         else:
             # The button is currently the Start button
             self.timer.start(1000)  # Update every second
             self.start_pause_button.setText("Pause")
             self.happy_button.setEnabled(False)
+            self.yoga_button.setEnabled(False)
             self.sad_button.setEnabled(False)
             # If timer type label is "Next: Rest", change it to "Rest" when starting the timer
             if (
@@ -506,6 +521,7 @@ class XbitoPomodoro(QMainWindow):
             # Set up the next timer
             if self.timer_type == "Focus":
                 self.happy_button.setEnabled(True)
+                self.yoga_button.setEnabled(True)
                 self.sad_button.setEnabled(True)
                 self.completed_sessions += 1
                 if self.completed_sessions % self.sessions_before_long_rest == 0:
@@ -544,6 +560,7 @@ class XbitoPomodoro(QMainWindow):
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
         self.happy_button.setEnabled(False)
+        self.yoga_button.setEnabled(False)
         self.sad_button.setEnabled(False)
         if not from_feedback:
             # On Reset always set the timer type to Focus, but if coming from Feedback let the natural flow go on.
