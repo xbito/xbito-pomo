@@ -1,6 +1,7 @@
 import random
 
 motivational_phrases = [
+    "You can't turn back the clock. But you can wind it up again.",
     "Believe in yourself, anything is possible.",
     "Don't watch the clock; do what it does - keep going.",
     "Success is not final, failure is not fatal: it's the courage to continue that counts.",
