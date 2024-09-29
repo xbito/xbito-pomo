@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime, timedelta
 
 
 def init_pomodoro_db():
@@ -54,3 +55,55 @@ def fetch_last_10_report_sessions():
     # Convert rows to a list of dictionaries
     sessions = [dict(row) for row in rows]
     return sessions
+
+
+def fetch_focus_summary():
+    """
+    Fetches a summary of Focus activity for the last week, yesterday, and today.
+    """
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    cursor = conn.cursor()
+
+    today = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+    week_ago = today - timedelta(days=7)
+
+    # Query for the last week's average (excluding today)
+    cursor.execute(
+        """
+        SELECT AVG(JULIANDAY(end_time) - JULIANDAY(start_time)) * 1440
+        FROM session_feedback
+        WHERE DATE(start_time) BETWEEN ? AND ?
+        AND feeling != 'pending'
+    """,
+        (week_ago, yesterday),
+    )
+    week_avg = cursor.fetchone()[0] or 0
+
+    # Query for yesterday's total
+    cursor.execute(
+        """
+        SELECT SUM(JULIANDAY(end_time) - JULIANDAY(start_time)) * 1440
+        FROM session_feedback
+        WHERE DATE(start_time) = ?
+        AND feeling != 'pending'
+    """,
+        (yesterday,),
+    )
+    yesterday_total = cursor.fetchone()[0] or 0
+
+    # Query for today's total
+    cursor.execute(
+        """
+        SELECT SUM(JULIANDAY(end_time) - JULIANDAY(start_time)) * 1440
+        FROM session_feedback
+        WHERE DATE(start_time) = ?
+        AND feeling != 'pending'
+    """,
+        (today,),
+    )
+    today_total = cursor.fetchone()[0] or 0
+
+    conn.close()
+
+    return {"week_avg": week_avg, "yesterday": yesterday_total, "today": today_total}

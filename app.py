@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QAbstractItemView,
     QHeaderView,
+    QSpinBox,
 )
 from PySide6.QtCore import QTimer, Qt, QDate, QEvent
 from PySide6.QtGui import QAction
@@ -30,6 +31,7 @@ from db import (
     insert_pomodoro_session,
     update_pomodoro_session,
     fetch_last_10_report_sessions,
+    fetch_focus_summary,  # Add this import
 )
 from motivation import get_motivational_phrase
 from yoga import get_desk_yoga_stretch
@@ -39,14 +41,15 @@ from sound import play_celebratory_melody, play_rest_end_melody
 
 class XbitoPomodoro(QMainWindow):
     def __init__(self, app, phrase):
+        self.debug_mode = (
+            "TERM_PROGRAM" in os.environ.keys()
+            and os.environ["TERM_PROGRAM"] == "vscode"
+        )
         self.phrase = phrase
         self.app = app
         self.start_time = None  # To store the session start time
         # Check if running in a debug session
-        if (
-            "TERM_PROGRAM" in os.environ.keys()
-            and os.environ["TERM_PROGRAM"] == "vscode"
-        ):
+        if self.debug_mode:
             logging.debug("Running in debug mode.")
             self.initial_seconds = 15  # 15 seconds for debug mode
             self.rest_seconds = 10  # 10 seconds for Rest timer in debug mode
@@ -78,6 +81,7 @@ class XbitoPomodoro(QMainWindow):
         self.setup_start_pause_button()
         self.setup_emoticon_buttons()
         self.setup_motivational_phrase()
+        self.setup_focus_summary()
         self.setup_menu()
         self.apply_dark_theme()
         self.adjustSize()
@@ -735,16 +739,120 @@ class XbitoPomodoro(QMainWindow):
         """
         Displays a Settings dialog with options to configure the application.
         """
-        settings_text = """
-        <h1>Settings</h1>
-        <p>Coming soon...</p>
+        settings_dialog = QDialog(self)
+        settings_dialog.setWindowTitle("Settings")
+        layout = QVBoxLayout()
+
+        # Determine the unit (seconds or minutes) based on debug mode
+        unit = "seconds" if self.debug_mode else "minutes"
+        divisor = 1 if self.debug_mode else 60
+
+        # Focus Duration
+        focus_layout = QHBoxLayout()
+        focus_label = QLabel(f"Focus Duration ({unit}):")
+        self.focus_spinbox = QSpinBox()
+        self.focus_spinbox.setRange(1, 7200 if self.debug_mode else 120)
+        self.focus_spinbox.setValue(self.initial_seconds // divisor)
+        focus_layout.addWidget(focus_label)
+        focus_layout.addWidget(self.focus_spinbox)
+        layout.addLayout(focus_layout)
+
+        # Short Break Duration
+        short_break_layout = QHBoxLayout()
+        short_break_label = QLabel(f"Short Break Duration ({unit}):")
+        self.short_break_spinbox = QSpinBox()
+        self.short_break_spinbox.setRange(1, 1800 if self.debug_mode else 30)
+        self.short_break_spinbox.setValue(self.rest_seconds // divisor)
+        short_break_layout.addWidget(short_break_label)
+        short_break_layout.addWidget(self.short_break_spinbox)
+        layout.addLayout(short_break_layout)
+
+        # Long Break Duration
+        long_break_layout = QHBoxLayout()
+        long_break_label = QLabel(f"Long Break Duration ({unit}):")
+        self.long_break_spinbox = QSpinBox()
+        self.long_break_spinbox.setRange(1, 3600 if self.debug_mode else 60)
+        self.long_break_spinbox.setValue(self.long_rest_seconds // divisor)
+        long_break_layout.addWidget(long_break_label)
+        long_break_layout.addWidget(self.long_break_spinbox)
+        layout.addLayout(long_break_layout)
+
+        # Sessions before Long Break
+        sessions_layout = QHBoxLayout()
+        sessions_label = QLabel("Sessions before Long Break:")
+        self.sessions_spinbox = QSpinBox()
+        self.sessions_spinbox.setRange(1, 10)
+        self.sessions_spinbox.setValue(self.sessions_before_long_rest)
+        sessions_layout.addWidget(sessions_label)
+        sessions_layout.addWidget(self.sessions_spinbox)
+        layout.addLayout(sessions_layout)
+
+        # Save and Cancel buttons
+        button_layout = QHBoxLayout()
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.save_settings)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(settings_dialog.reject)
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(cancel_button)
+        layout.addLayout(button_layout)
+
+        settings_dialog.setLayout(layout)
+        settings_dialog.exec()
+
+    def save_settings(self):
         """
-        self.show_dialog("Settings", settings_text)
+        Saves the settings from the dialog and updates the application state.
+        """
+        multiplier = 1 if self.debug_mode else 60
+
+        self.initial_seconds = self.focus_spinbox.value() * multiplier
+        self.rest_seconds = self.short_break_spinbox.value() * multiplier
+        self.long_rest_seconds = self.long_break_spinbox.value() * multiplier
+        self.sessions_before_long_rest = self.sessions_spinbox.value()
+
+        # Update the remaining seconds if the timer is not running
+        if not self.is_timer_running:
+            if self.timer_type == "Focus":
+                self.remaining_seconds = self.initial_seconds
+            elif self.timer_type == "Rest":
+                self.remaining_seconds = self.rest_seconds
+            self.update_countdown_display()
+
+        # Close the settings dialog
+        self.sender().parent().accept()
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
         self.reset_timer()
         event.accept()  # Ensures the window closes smoothly
+
+    def setup_focus_summary(self):
+        """
+        Sets up the focus summary label in the UI.
+        """
+        self.focus_summary_label = QLabel()
+        self.focus_summary_label.setWordWrap(True)
+        self.focus_summary_label.setAlignment(Qt.AlignCenter)
+        self.focus_summary_label.setStyleSheet("font-size: 12px;")
+        self.layout.addWidget(self.focus_summary_label)
+
+        # Update focus summary initially and set up a timer to update it periodically
+        self.update_focus_summary()
+        self.focus_summary_timer = QTimer(self)
+        self.focus_summary_timer.timeout.connect(self.update_focus_summary)
+        self.focus_summary_timer.start(300000)  # Update every 5 minutes
+
+    def update_focus_summary(self):
+        """
+        Updates the focus summary label with the latest data.
+        """
+        summary = fetch_focus_summary()
+        summary_text = (
+            f"Focus Time (avg/day last week): {summary['week_avg']:.1f} min\n"
+            f"Yesterday: {summary['yesterday']:.1f} min | Today: {summary['today']:.1f} min"
+        )
+        self.focus_summary_label.setText(summary_text)
 
 
 def main():
