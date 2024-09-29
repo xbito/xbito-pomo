@@ -107,3 +107,41 @@ def fetch_focus_summary():
     conn.close()
 
     return {"week_avg": week_avg, "yesterday": yesterday_total, "today": today_total}
+
+
+def init_settings_table():
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS settings
+                 (key TEXT PRIMARY KEY, value INTEGER)"""
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_setting(key, value):
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_setting(key, default_value):
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key = ?", (key,))
+    result = c.fetchone()
+    conn.close()
+    return result[0] if result else default_value
+
+
+def delete_setting(key):
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM settings WHERE key = ?", (key,))
+    conn.commit()
+    conn.close()

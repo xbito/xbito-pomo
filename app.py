@@ -31,7 +31,11 @@ from db import (
     insert_pomodoro_session,
     update_pomodoro_session,
     fetch_last_10_report_sessions,
-    fetch_focus_summary,  # Add this import
+    fetch_focus_summary,
+    init_settings_table,
+    get_setting,
+    save_setting,
+    delete_setting,
 )
 from motivation import get_motivational_phrase
 from yoga import get_desk_yoga_stretch
@@ -61,11 +65,15 @@ class XbitoPomodoro(QMainWindow):
             self.long_rest_seconds = 900  # 15 minutes for Long Rest timer
             self.update_motivational_phrase_seconds = 21600  # 6 hours
         self.sessions_before_long_rest = 2  # Number of sessions before a long rest
+        # Settings need to be loaded before we compute remaining_seconds
+        self.load_settings()
         self.completed_sessions = 0  # Track the number of completed sessions
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
         # Initialize the database
         init_pomodoro_db()
+        # Initialize the settings table
+        init_settings_table()
         super().__init__()
         self.setup_window()
         # Create a central widget and layout
@@ -85,6 +93,68 @@ class XbitoPomodoro(QMainWindow):
         self.setup_menu()
         self.apply_dark_theme()
         self.adjustSize()
+
+    def load_settings(self):
+        """
+        Loads settings from the database.
+        """
+        self.initial_seconds = get_setting("focus_duration", self.initial_seconds)
+        self.rest_seconds = get_setting("short_break_duration", self.rest_seconds)
+        self.long_rest_seconds = get_setting(
+            "long_break_duration", self.long_rest_seconds
+        )
+        self.sessions_before_long_rest = get_setting(
+            "sessions_before_long_break", self.sessions_before_long_rest
+        )
+
+    def save_settings(self):
+        """
+        Saves the settings from the dialog and updates the application state.
+        """
+        multiplier = 1 if self.debug_mode else 60
+
+        new_initial_seconds = self.focus_spinbox.value() * multiplier
+        new_rest_seconds = self.short_break_spinbox.value() * multiplier
+        new_long_rest_seconds = self.long_break_spinbox.value() * multiplier
+        new_sessions_before_long_rest = self.sessions_spinbox.value()
+
+        # Save settings only if they differ from the default values
+        if new_initial_seconds != self.initial_seconds:
+            save_setting("focus_duration", new_initial_seconds)
+        else:
+            delete_setting("focus_duration")
+
+        if new_rest_seconds != self.rest_seconds:
+            save_setting("short_break_duration", new_rest_seconds)
+        else:
+            delete_setting("short_break_duration")
+
+        if new_long_rest_seconds != self.long_rest_seconds:
+            save_setting("long_break_duration", new_long_rest_seconds)
+        else:
+            delete_setting("long_break_duration")
+
+        if new_sessions_before_long_rest != self.sessions_before_long_rest:
+            save_setting("sessions_before_long_break", new_sessions_before_long_rest)
+        else:
+            delete_setting("sessions_before_long_break")
+
+        # Update the application state
+        self.initial_seconds = new_initial_seconds
+        self.rest_seconds = new_rest_seconds
+        self.long_rest_seconds = new_long_rest_seconds
+        self.sessions_before_long_rest = new_sessions_before_long_rest
+
+        # Update the remaining seconds if the timer is not running
+        if not self.is_timer_running:
+            if self.timer_type == "Focus":
+                self.remaining_seconds = self.initial_seconds
+            elif self.timer_type == "Rest":
+                self.remaining_seconds = self.rest_seconds
+            self.update_countdown_display()
+
+        # Close the settings dialog
+        self.sender().parent().accept()
 
     def setup_menu(self):
         """
@@ -799,28 +869,6 @@ class XbitoPomodoro(QMainWindow):
 
         settings_dialog.setLayout(layout)
         settings_dialog.exec()
-
-    def save_settings(self):
-        """
-        Saves the settings from the dialog and updates the application state.
-        """
-        multiplier = 1 if self.debug_mode else 60
-
-        self.initial_seconds = self.focus_spinbox.value() * multiplier
-        self.rest_seconds = self.short_break_spinbox.value() * multiplier
-        self.long_rest_seconds = self.long_break_spinbox.value() * multiplier
-        self.sessions_before_long_rest = self.sessions_spinbox.value()
-
-        # Update the remaining seconds if the timer is not running
-        if not self.is_timer_running:
-            if self.timer_type == "Focus":
-                self.remaining_seconds = self.initial_seconds
-            elif self.timer_type == "Rest":
-                self.remaining_seconds = self.rest_seconds
-            self.update_countdown_display()
-
-        # Close the settings dialog
-        self.sender().parent().accept()
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
