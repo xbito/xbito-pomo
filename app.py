@@ -49,6 +49,10 @@ class XbitoPomodoro(QMainWindow):
             "TERM_PROGRAM" in os.environ.keys()
             and os.environ["TERM_PROGRAM"] == "vscode"
         )
+        # Initialize the database
+        init_pomodoro_db()
+        # Initialize the settings table
+        init_settings_table()
         self.phrase = phrase
         self.app = app
         self.start_time = None  # To store the session start time
@@ -70,10 +74,6 @@ class XbitoPomodoro(QMainWindow):
         self.completed_sessions = 0  # Track the number of completed sessions
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
-        # Initialize the database
-        init_pomodoro_db()
-        # Initialize the settings table
-        init_settings_table()
         super().__init__()
         self.setup_window()
         # Create a central widget and layout
