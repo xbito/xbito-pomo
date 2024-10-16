@@ -74,7 +74,7 @@ def fetch_focus_summary():
         SELECT AVG(JULIANDAY(end_time) - JULIANDAY(start_time)) * 1440
         FROM session_feedback
         WHERE DATE(start_time) BETWEEN ? AND ?
-        AND feeling != 'pending'
+        AND end_time is not null
     """,
         (week_ago, yesterday),
     )
@@ -86,7 +86,7 @@ def fetch_focus_summary():
         SELECT SUM(JULIANDAY(end_time) - JULIANDAY(start_time)) * 1440
         FROM session_feedback
         WHERE DATE(start_time) = ?
-        AND feeling != 'pending'
+        AND end_time is not null
     """,
         (yesterday,),
     )
@@ -98,7 +98,7 @@ def fetch_focus_summary():
         SELECT SUM(JULIANDAY(end_time) - JULIANDAY(start_time)) * 1440
         FROM session_feedback
         WHERE DATE(start_time) = ?
-        AND feeling != 'pending'
+        AND end_time is not null
     """,
         (today,),
     )
