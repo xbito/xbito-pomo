@@ -328,7 +328,7 @@ class XbitoPomodoro(QMainWindow):
 
         self.reset_button = QPushButton("Reset")
         self.reset_button.setStyleSheet("font-size: 18px; padding: 5px;")
-        self.reset_button.clicked.connect(self.reset_timer)
+        self.reset_button.clicked.connect(self.click_reset_timer)
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.start_pause_button, 1)
@@ -526,12 +526,12 @@ class XbitoPomodoro(QMainWindow):
         """
         if self.is_timer_running:
             # The button is currently the Pause button
-            self.pause_timer()
+            self.click_pause_timer()
         else:
             # The button is currently the Start button
-            self.start_timer()
+            self.click_start_timer()
 
-    def start_timer(self):
+    def click_start_timer(self):
         """
         Starts the timer based on the current timer type.
 
@@ -561,7 +561,7 @@ class XbitoPomodoro(QMainWindow):
         if self.timer_type == "Focus":
             insert_pomodoro_session(self.start_time, None, "pending")
 
-    def pause_timer(self):
+    def click_pause_timer(self):
         """
         Pauses the timer.
 
@@ -580,67 +580,7 @@ class XbitoPomodoro(QMainWindow):
         self.yoga_button.setEnabled(True)
         self.sad_button.setEnabled(True)
 
-    def stop_timer(self):
-        """
-        A session has completed.
-        - changes the start/pause button text to "Start",
-        - enables the feedback buttons
-        - attempts to play a melody. If an error occurs while playing the melody, logs the error.
-
-        """
-        self.timer.stop()
-        self.start_pause_button.setText("Start")
-        self.is_timer_running = False
-        # Play the corresponding melody
-        logging.debug(f"Playing melody: {self.timer_type}")
-        if self.timer_type == "Focus":
-            # Record the session as completed
-            update_pomodoro_session(
-                self.start_time,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "pending",
-            )
-            try:
-                play_celebratory_melody()
-            except Exception as e:
-                logging.error(f"Error playing melody: {e}")
-        elif self.timer_type == "Rest":
-            try:
-                play_rest_end_melody()
-            except Exception as e:
-                logging.error(f"Error playing melody: {e}")
-        # Set up the next timer
-        if self.timer_type == "Focus":
-            self.happy_button.setEnabled(True)
-            self.yoga_button.setEnabled(True)
-            self.sad_button.setEnabled(True)
-            self.completed_sessions += 1
-            if self.completed_sessions % self.sessions_before_long_rest == 0:
-                self.timer_type_label.setText("Next: Long Rest")
-                self.remaining_seconds = self.long_rest_seconds
-            else:
-                self.timer_type_label.setText("Next: Rest")
-                self.remaining_seconds = self.rest_seconds
-        elif self.timer_type == "Rest":
-            self.timer_type_label.setText("Next: Focus")
-            self.remaining_seconds = self.initial_seconds
-        # Convert self.remaining_seconds to minutes and seconds for the countdown label
-        self.update_countdown_display()
-
-    def auto_update_countdown(self):
-        """
-        Automatically updates the countdown timer and handles actions when the timer reaches zero.
-
-        Decreases the remaining seconds by 1 and updates the countdown label with the new time.
-        If the remaining seconds reach zero:
-        - stops the timer
-        """
-        self.remaining_seconds -= 1
-        self.update_countdown_display()
-        if self.remaining_seconds <= 0:
-            self.stop_timer()
-
-    def reset_timer(self, from_feedback=False):
+    def click_reset_timer(self, from_feedback=False):
         """
         Resets the timer to its initial state.
 
@@ -670,6 +610,62 @@ class XbitoPomodoro(QMainWindow):
             # On Reset always set the timer type to Focus, but if coming from Feedback let the natural flow go on.
             self.timer_type = "Focus"
             self.timer_type_label.setText("Focus")
+
+    def auto_stop_timer(self):
+        """
+        A session has completed.
+        - changes the start/pause button text to "Start",
+        - enables the feedback buttons
+        - attempts to play a melody. If an error occurs while playing the melody, logs the error.
+        """
+        self.timer.stop()
+        self.start_pause_button.setText("Start")
+        self.is_timer_running = False
+        # Play the corresponding melody
+        logging.debug(f"Playing melody: {self.timer_type}")
+        if self.timer_type == "Focus":
+            # Record the session as completed
+            update_pomodoro_session(
+                self.start_time,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "pending",
+            )
+            try:
+                play_celebratory_melody()
+            except Exception as e:
+                logging.error(f"Error playing melody: {e}")
+            self.happy_button.setEnabled(True)
+            self.yoga_button.setEnabled(True)
+            self.sad_button.setEnabled(True)
+            self.completed_sessions += 1
+            if self.completed_sessions % self.sessions_before_long_rest == 0:
+                self.timer_type_label.setText("Next: Long Rest")
+                self.remaining_seconds = self.long_rest_seconds
+            else:
+                self.timer_type_label.setText("Next: Rest")
+                self.remaining_seconds = self.rest_seconds
+        elif self.timer_type == "Rest":
+            try:
+                play_rest_end_melody()
+            except Exception as e:
+                logging.error(f"Error playing melody: {e}")
+            self.timer_type_label.setText("Next: Focus")
+            self.remaining_seconds = self.initial_seconds
+        # Convert self.remaining_seconds to minutes and seconds for the countdown label
+        self.update_countdown_display()
+
+    def auto_update_countdown(self):
+        """
+        Automatically updates the countdown timer and handles actions when the timer reaches zero.
+
+        Decreases the remaining seconds by 1 and updates the countdown label with the new time.
+        If the remaining seconds reach zero:
+        - stops the timer
+        """
+        self.remaining_seconds -= 1
+        self.update_countdown_display()
+        if self.remaining_seconds <= 0:
+            self.auto_stop_timer()
 
     def manually_adjust_timer(self, minutes_change):
         """
@@ -712,7 +708,7 @@ class XbitoPomodoro(QMainWindow):
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             update_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
-            self.reset_timer(from_feedback=True)
+            self.click_reset_timer(from_feedback=True)
 
     def update_progress_bar(self):
         """
@@ -902,7 +898,7 @@ class XbitoPomodoro(QMainWindow):
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
-        self.reset_timer()
+        self.click_reset_timer()
         event.accept()  # Ensures the window closes smoothly
 
     def setup_focus_summary(self):
