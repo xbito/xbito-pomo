@@ -91,3 +91,42 @@ def play_rest_end_melody():
         os.remove(tmpfile.name)
     except Exception as e:
         logging.error("Error occurred while attempting to play rest end melody: %s", e)
+
+
+def play_bell_sound():
+    try:
+        logging.debug("Attempting to play bell sound.")
+        # Create a bell sound with a sequence of notes
+        durations = [500, 500, 500]  # Durations in milliseconds
+        notes = [
+            Sine(659),  # E5
+            Sine(784),  # G5
+            Sine(988),  # B5
+        ]
+
+        # Initial and final volumes as a percentage
+        initial_volume = 0.3
+        final_volume = 0.7
+
+        # Calculate the volume increase per note
+        volume_step = (final_volume - initial_volume) / (len(notes) - 1)
+        segments = []
+
+        for i, note in enumerate(notes):
+            volume = initial_volume + i * volume_step
+            segment = note.to_audio_segment(duration=durations[i]).apply_gain(
+                20 * log10(volume)
+            )
+            segments.append(segment)
+
+        bell_sound = sum(segments)
+        # Save the generated bell sound to a temporary WAV file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
+            bell_sound.export(tmpfile.name, format="wav")
+            # Play the WAV file
+            winsound.PlaySound(tmpfile.name, winsound.SND_FILENAME)
+            logging.debug("Bell sound finished playing.")
+        # Clean up the temporary file
+        os.remove(tmpfile.name)
+    except Exception as e:
+        logging.error("Error occurred while attempting to play bell sound: %s", e)

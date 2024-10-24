@@ -40,7 +40,7 @@ from db import (
 from motivation import get_motivational_phrase
 from yoga import get_desk_yoga_stretch
 
-from sound import play_celebratory_melody, play_rest_end_melody
+from sound import play_celebratory_melody, play_rest_end_melody, play_bell_sound
 
 
 class XbitoPomodoro(QMainWindow):
@@ -63,17 +63,20 @@ class XbitoPomodoro(QMainWindow):
             self.rest_seconds = 10  # 10 seconds for Rest timer in debug mode
             self.long_rest_seconds = 20  # 20 seconds for Long Rest timer in debug mode
             self.update_motivational_phrase_seconds = 30  # 30 seconds for debug mode
+            self.session_alert_miliseconds = 10 * 1000  # 10 seconds for debug mode
         else:
             self.initial_seconds = 1800  # 30 minutes
             self.rest_seconds = 300  # 5 minutes for Rest timer
             self.long_rest_seconds = 900  # 15 minutes for Long Rest timer
             self.update_motivational_phrase_seconds = 21600  # 6 hours
+            self.session_alert_miliseconds = 10 * 60 * 1000  # 10 minutes
         self.sessions_before_long_rest = 2  # Number of sessions before a long rest
         # Settings need to be loaded before we compute remaining_seconds
         self.load_settings()
         self.completed_sessions = 0  # Track the number of completed sessions
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
+        self.session_alert_triggered = False  # Track if the alert has been triggered
         super().__init__()
         self.setup_window()
         # Create a central widget and layout
@@ -93,6 +96,7 @@ class XbitoPomodoro(QMainWindow):
         self.setup_menu()
         self.apply_dark_theme()
         self.adjustSize()
+        self.setup_session_alert_timer()  # Add this line to initialize the session alert timer
 
     def load_settings(self):
         """
@@ -560,6 +564,8 @@ class XbitoPomodoro(QMainWindow):
         # If after changing the timer_type it is Focus then record the start time
         if self.timer_type == "Focus":
             insert_pomodoro_session(self.start_time, None, "pending")
+        self.reset_session_alert_timer()  # Reset the session alert timer when a session starts
+        self.session_alert_triggered = False  # Reset the session alert triggered flag
 
     def click_pause_timer(self):
         """
@@ -579,6 +585,8 @@ class XbitoPomodoro(QMainWindow):
         self.happy_button.setEnabled(True)
         self.yoga_button.setEnabled(True)
         self.sad_button.setEnabled(True)
+        self.reset_session_alert_timer()  # Reset the session alert timer when a pause happens
+        self.session_alert_triggered = False  # Reset the session alert triggered flag
 
     def click_reset_timer(self, from_feedback=False):
         """
@@ -610,6 +618,8 @@ class XbitoPomodoro(QMainWindow):
             # On Reset always set the timer type to Focus, but if coming from Feedback let the natural flow go on.
             self.timer_type = "Focus"
             self.timer_type_label.setText("Focus")
+        self.reset_session_alert_timer()  # Reset the session alert timer when a reset happens
+        self.session_alert_triggered = False  # Reset the session alert triggered flag
 
     def auto_stop_timer(self):
         """
@@ -653,6 +663,8 @@ class XbitoPomodoro(QMainWindow):
             self.remaining_seconds = self.initial_seconds
         # Convert self.remaining_seconds to minutes and seconds for the countdown label
         self.update_countdown_display()
+        self.reset_session_alert_timer()  # Reset the session alert timer when a session finishes normally
+        self.session_alert_triggered = False  # Reset the session alert triggered flag
 
     def auto_update_countdown(self):
         """
@@ -927,6 +939,32 @@ class XbitoPomodoro(QMainWindow):
             f"Yesterday: {summary['yesterday']:.1f} min | Today: {summary['today']:.1f} min"
         )
         self.focus_summary_label.setText(summary_text)
+
+    def setup_session_alert_timer(self):
+        """
+        Sets up a timer to alert the user if a session has not started within 10 minutes.
+        """
+        print("Starting the session alert timer at", datetime.now())
+        self.session_alert_timer = QTimer(self)
+        self.session_alert_timer.timeout.connect(self.trigger_session_alert)
+        self.session_alert_timer.start(self.session_alert_miliseconds)
+
+    def reset_session_alert_timer(self):
+        """
+        Resets the session alert timer.
+        """
+        print("Reset the session alert timer at", datetime.now())
+        self.session_alert_timer.start(self.session_alert_miliseconds)
+        self.session_alert_triggered = False  # Reset the session alert triggered flag
+
+    def trigger_session_alert(self):
+        """
+        Triggers an alert if no session has started within 10 minutes.
+        """
+        if not self.is_timer_running and not self.session_alert_triggered:
+            play_bell_sound()
+            self.show_dialog("Alert", "You haven't started a session. Did you forget?")
+            self.session_alert_triggered = True  # Ensure the alert happens only once
 
 
 def main():
