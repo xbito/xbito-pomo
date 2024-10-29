@@ -2,13 +2,16 @@ import sqlite3
 from datetime import datetime, timedelta
 
 
-def init_pomodoro_db():
-    # Function to create/connect to a SQLite database and create the table if it doesn't exist
+def init_db():
     conn = sqlite3.connect("pomodoro_sessions.db")
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS session_feedback
                  (start_time TEXT, end_time TEXT, feeling TEXT)"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS settings
+                 (key TEXT PRIMARY KEY, value INTEGER)"""
     )
     conn.commit()
     conn.close()
@@ -107,17 +110,6 @@ def fetch_focus_summary():
     conn.close()
 
     return {"week_avg": week_avg, "yesterday": yesterday_total, "today": today_total}
-
-
-def init_settings_table():
-    conn = sqlite3.connect("pomodoro_sessions.db")
-    c = conn.cursor()
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS settings
-                 (key TEXT PRIMARY KEY, value INTEGER)"""
-    )
-    conn.commit()
-    conn.close()
 
 
 def save_setting(key, value):

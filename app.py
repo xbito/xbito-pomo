@@ -18,11 +18,10 @@ from datetime import datetime, time
 
 from MultiColorProgressBar import MultiColorProgressBar
 from db import (
-    init_pomodoro_db,
+    init_db,
     insert_pomodoro_session,
     update_pomodoro_session,
     fetch_focus_summary,
-    init_settings_table,
     get_setting,
     save_setting,
     delete_setting,
@@ -40,10 +39,8 @@ class XbitoPomodoro(QMainWindow):
             "TERM_PROGRAM" in os.environ.keys()
             and os.environ["TERM_PROGRAM"] == "vscode"
         )
-        # Initialize the database
-        init_pomodoro_db()
-        # Initialize the settings table
-        init_settings_table()
+        # Initialize the database with unified init_db function
+        init_db()
         self.phrase = phrase
         self.app = app
         self.start_time = None  # To store the session start time
