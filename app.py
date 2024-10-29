@@ -1,9 +1,6 @@
 import os
 import sys
 import logging
-import threading
-
-from time import sleep
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -14,14 +11,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QWidget,
     QDialog,
-    QTableWidget,
-    QTableWidgetItem,
-    QAbstractItemView,
-    QHeaderView,
-    QSpinBox,
 )
-from PySide6.QtCore import QTimer, Qt, QDate, QEvent
-from PySide6.QtGui import QAction
+from PySide6.QtCore import QTimer, Qt, QDate
 
 from datetime import datetime, time
 
@@ -30,7 +21,6 @@ from db import (
     init_pomodoro_db,
     insert_pomodoro_session,
     update_pomodoro_session,
-    fetch_last_10_report_sessions,
     fetch_focus_summary,
     init_settings_table,
     get_setting,
@@ -41,6 +31,7 @@ from motivation import get_motivational_phrase
 from yoga import get_desk_yoga_stretch
 
 from sound import play_celebratory_melody, play_rest_end_melody, play_bell_sound
+from menu import AppMenu
 
 
 class XbitoPomodoro(QMainWindow):
@@ -93,7 +84,7 @@ class XbitoPomodoro(QMainWindow):
         self.setup_emoticon_buttons()
         self.setup_motivational_phrase()
         self.setup_focus_summary()
-        self.setup_menu()
+        self.menu = AppMenu(self)  # Initialize the AppMenu
         self.apply_dark_theme()
         self.adjustSize()
         self.setup_session_alert_timer()  # Add this line to initialize the session alert timer
@@ -159,117 +150,6 @@ class XbitoPomodoro(QMainWindow):
 
         # Close the settings dialog
         self.sender().parent().accept()
-
-    def setup_menu(self):
-        """
-        Sets up the menu bar with the About and Settings actions.
-        """
-        menu_bar = self.menuBar()
-        menu = menu_bar.addMenu("Menu")
-
-        about_action = QAction("About", self)
-        about_action.triggered.connect(self.show_about_dialog)
-        menu.addAction(about_action)
-
-        settings_action = QAction("Settings", self)
-        settings_action.triggered.connect(self.show_settings_dialog)
-        menu.addAction(settings_action)
-
-        report_action = QAction("Report", self)
-        report_action.triggered.connect(self.show_report_dialog)
-        menu.addAction(report_action)
-
-        send_to_back_action = QAction("Send to Back", self)
-        send_to_back_action.triggered.connect(self.send_to_back)
-        menu.addAction(send_to_back_action)
-
-    def show_report_dialog(self):
-        """
-        Displays a report Dialog with some basic reporting data.
-        """
-        # Create a QDialog object for the report dialog
-        report_dialog = QDialog(self)
-        report_dialog.setWindowTitle("Report")
-        report_dialog.setMinimumWidth(550)  # Set a minimum width for the dialog
-        report_dialog.setMinimumHeight(500)  # Set a minimum height for the dialog
-
-        # Create a QVBoxLayout for the report dialog
-        layout = QVBoxLayout()
-
-        # Add a title and subtitle with a more sophisticated layout
-        title_layout = QVBoxLayout()
-        title_label = QLabel("<h1>Report</h1>")
-        title_label.setAlignment(Qt.AlignCenter)
-        subtitle_label = QLabel("<p>Last 10 Sessions</p>")
-        subtitle_label.setAlignment(Qt.AlignCenter)
-        title_layout.addWidget(title_label)
-        title_layout.addWidget(subtitle_label)
-        layout.addLayout(title_layout)
-
-        # Create a QTableWidget to display the report data
-        table_widget = QTableWidget()
-        table_widget.setColumnCount(3)
-        table_widget.setHorizontalHeaderLabels(["Start Time", "End Time", "Feeling"])
-
-        # Fetch the last 10 report sessions from the database
-        report_sessions = fetch_last_10_report_sessions()
-
-        # Populate the table with the report session details
-        table_widget.setRowCount(len(report_sessions))
-        for row, session in enumerate(report_sessions):
-            start_time = QTableWidgetItem(session["start_time"])
-            end_time = QTableWidgetItem(session["end_time"])
-            feeling = QTableWidgetItem(str(session["feeling"]))
-
-            table_widget.setItem(row, 0, start_time)
-            table_widget.setItem(row, 1, end_time)
-            table_widget.setItem(row, 2, feeling)
-
-        # Set the table widget properties
-        table_widget.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        table_widget.setSelectionBehavior(QAbstractItemView.SelectRows)
-        table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        table_widget.setAlternatingRowColors(True)
-        table_widget.setStyleSheet("QTableWidget { border: 1px solid #ddd; }")
-
-        # Adjust column widths to fit the date-time columns
-        table_widget.setColumnWidth(0, 200)  # Adjust width for "Start Time"
-        table_widget.setColumnWidth(1, 200)  # Adjust width for "End Time"
-
-        # Adjust row height to fit all rows within the dialog
-        table_widget.verticalHeader().setDefaultSectionSize(30)  # Adjust row height
-
-        # Add the table widget to the layout
-        layout.addWidget(table_widget)
-
-        # Add a close button with styling
-        close_button = QPushButton("Close")
-        close_button.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """
-        )
-        close_button.clicked.connect(report_dialog.accept)
-        layout.addWidget(close_button)
-
-        # Set the layout for the report dialog
-        report_dialog.setLayout(layout)
-
-        # Show the report dialog
-        report_dialog.exec_()
 
     def send_to_back(self):
         """
@@ -829,84 +709,6 @@ class XbitoPomodoro(QMainWindow):
         layout.addWidget(label)
         dialog.setLayout(layout)
         dialog.exec()
-
-    def show_about_dialog(self):
-        """
-        Displays an About dialog with information about the application.
-        """
-        about_text = """
-        <h1>Xbito - Pomodoro Timer</h1>
-        <p>Version 0.5</p>
-        <p>Developed by <a href="https://github.com/xbito/">Xbito</a></p>
-        <p>With help from GitHub Copilot</p>
-        <p>Visit us at <a href="https://github.com/xbito/xbito-pomo">Github</a></p>
-        """
-        self.show_dialog("About", about_text)
-
-    def show_settings_dialog(self):
-        """
-        Displays a Settings dialog with options to configure the application.
-        """
-        settings_dialog = QDialog(self)
-        settings_dialog.setWindowTitle("Settings")
-        layout = QVBoxLayout()
-
-        # Determine the unit (seconds or minutes) based on debug mode
-        unit = "seconds" if self.debug_mode else "minutes"
-        divisor = 1 if self.debug_mode else 60
-
-        # Focus Duration
-        focus_layout = QHBoxLayout()
-        focus_label = QLabel(f"Focus Duration ({unit}):")
-        self.focus_spinbox = QSpinBox()
-        self.focus_spinbox.setRange(1, 7200 if self.debug_mode else 120)
-        self.focus_spinbox.setValue(self.initial_seconds // divisor)
-        focus_layout.addWidget(focus_label)
-        focus_layout.addWidget(self.focus_spinbox)
-        layout.addLayout(focus_layout)
-
-        # Short Break Duration
-        short_break_layout = QHBoxLayout()
-        short_break_label = QLabel(f"Short Break Duration ({unit}):")
-        self.short_break_spinbox = QSpinBox()
-        self.short_break_spinbox.setRange(1, 1800 if self.debug_mode else 30)
-        self.short_break_spinbox.setValue(self.rest_seconds // divisor)
-        short_break_layout.addWidget(short_break_label)
-        short_break_layout.addWidget(self.short_break_spinbox)
-        layout.addLayout(short_break_layout)
-
-        # Long Break Duration
-        long_break_layout = QHBoxLayout()
-        long_break_label = QLabel(f"Long Break Duration ({unit}):")
-        self.long_break_spinbox = QSpinBox()
-        self.long_break_spinbox.setRange(1, 3600 if self.debug_mode else 60)
-        self.long_break_spinbox.setValue(self.long_rest_seconds // divisor)
-        long_break_layout.addWidget(long_break_label)
-        long_break_layout.addWidget(self.long_break_spinbox)
-        layout.addLayout(long_break_layout)
-
-        # Sessions before Long Break
-        sessions_layout = QHBoxLayout()
-        sessions_label = QLabel("Sessions before Long Break:")
-        self.sessions_spinbox = QSpinBox()
-        self.sessions_spinbox.setRange(1, 10)
-        self.sessions_spinbox.setValue(self.sessions_before_long_rest)
-        sessions_layout.addWidget(sessions_label)
-        sessions_layout.addWidget(self.sessions_spinbox)
-        layout.addLayout(sessions_layout)
-
-        # Save and Cancel buttons
-        button_layout = QHBoxLayout()
-        save_button = QPushButton("Save")
-        save_button.clicked.connect(self.save_settings)
-        cancel_button = QPushButton("Cancel")
-        cancel_button.clicked.connect(settings_dialog.reject)
-        button_layout.addWidget(save_button)
-        button_layout.addWidget(cancel_button)
-        layout.addLayout(button_layout)
-
-        settings_dialog.setLayout(layout)
-        settings_dialog.exec()
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
