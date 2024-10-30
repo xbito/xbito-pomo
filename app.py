@@ -689,23 +689,45 @@ class XbitoPomodoro(QMainWindow):
         """
         )
 
-    def show_dialog(self, title, text):
+    def show_dialog(self, title, text, show_snooze=False):
         """
         Displays a dialog with the specified title and text.
 
         Args:
             title (str): The title of the dialog.
             text (str): The text content of the dialog.
+            show_snooze (bool): Whether to show the snooze button.
 
         """
         dialog = QDialog(self)
         dialog.setWindowTitle(title)
         layout = QVBoxLayout()
+
         label = QLabel(text)
         label.setWordWrap(True)
         layout.addWidget(label)
+
+        if show_snooze:
+            button_layout = QHBoxLayout()
+            snooze_button = QPushButton("Snooze")
+            ok_button = QPushButton("OK")
+
+            snooze_button.clicked.connect(lambda: self.handle_snooze(dialog))
+            ok_button.clicked.connect(dialog.accept)
+
+            button_layout.addWidget(snooze_button)
+            button_layout.addWidget(ok_button)
+            layout.addLayout(button_layout)
+
         dialog.setLayout(layout)
         dialog.exec()
+
+    def handle_snooze(self, dialog):
+        """
+        Handles the snooze action by resetting the session alert timer.
+        """
+        self.reset_session_alert_timer()
+        dialog.accept()
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
@@ -762,8 +784,12 @@ class XbitoPomodoro(QMainWindow):
         """
         if not self.is_timer_running and not self.session_alert_triggered:
             play_bell_sound()
-            self.show_dialog("Alert", "You haven't started a session. Did you forget?")
             self.session_alert_triggered = True  # Ensure the alert happens only once
+            self.show_dialog(
+                "Alert",
+                "You haven't started a session. Did you forget?",
+                show_snooze=True,
+            )
 
 
 def main():
