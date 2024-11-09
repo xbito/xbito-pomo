@@ -1,6 +1,13 @@
 import os
 import sys
 import logging
+import platform
+import ctypes
+
+if platform.system() == "Windows":
+    import win32api
+    import win32con
+    import win32gui
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -731,6 +738,10 @@ class XbitoPomodoro(QMainWindow):
 
     def closeEvent(self, event):
         logging.debug("Application close event triggered. Resetting timer.")
+        if platform.system() == "Windows":
+            # Unregister power notifications
+            if hasattr(self, "power_notify"):
+                win32gui.UnregisterPowerSettingNotification(self.power_notify)
         self.click_reset_timer()
         event.accept()  # Ensures the window closes smoothly
 
@@ -790,6 +801,26 @@ class XbitoPomodoro(QMainWindow):
                 "You haven't started a session. Did you forget?",
                 show_snooze=True,
             )
+
+    def nativeEvent(self, eventType, message):
+        """Handle native Windows events including power notifications"""
+        if platform.system() == "Windows":
+            msg = ctypes.wintypes.MSG.from_address(int(message))
+            if msg.message == win32con.WM_POWERBROADCAST:
+                if msg.wParam == win32con.PBT_APMRESUMEAUTOMATIC:
+                    self.handle_resume_from_suspend()
+        return False, 0
+
+    def handle_resume_from_suspend(self):
+        """Handle computer resuming from suspend state"""
+        logging.debug("System resumed from suspend")
+        if not self.is_timer_running:
+            # Close any existing alert dialog
+            for child in self.children():
+                if isinstance(child, QDialog):
+                    child.close()
+            # Reset the session alert timer
+            self.reset_session_alert_timer()
 
 
 def main():
