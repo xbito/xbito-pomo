@@ -4,3 +4,5 @@ simpleaudio==1.0.4
 shiboken6==6.7.0
 pytest
 pytest-qt
+# Add pywin32 only on Windows
+pywin32==301; sys_platform == 'Windows'
