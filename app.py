@@ -18,10 +18,11 @@ from PySide6.QtWidgets import (
     QLabel,
     QWidget,
     QDialog,
+    QSpinBox,
 )
 from PySide6.QtCore import QTimer, Qt, QDate
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 from MultiColorProgressBar import MultiColorProgressBar
 from db import (
@@ -719,7 +720,18 @@ class XbitoPomodoro(QMainWindow):
             snooze_button = QPushButton("Snooze")
             ok_button = QPushButton("OK")
 
-            snooze_button.clicked.connect(lambda: self.handle_snooze(dialog))
+            snooze_duration_spinbox = QSpinBox()
+            snooze_duration_spinbox.setRange(
+                1, 60
+            )  # Allow snooze duration from 1 to 60 minutes
+            snooze_duration_spinbox.setValue(
+                10
+            )  # Default snooze duration is 10 minutes
+            button_layout.addWidget(snooze_duration_spinbox)
+
+            snooze_button.clicked.connect(
+                lambda: self.handle_snooze(dialog, snooze_duration_spinbox.value())
+            )
             ok_button.clicked.connect(dialog.accept)
 
             button_layout.addWidget(snooze_button)
@@ -729,11 +741,11 @@ class XbitoPomodoro(QMainWindow):
         dialog.setLayout(layout)
         dialog.exec()
 
-    def handle_snooze(self, dialog):
+    def handle_snooze(self, dialog, snooze_duration=None):
         """
-        Handles the snooze action by resetting the session alert timer.
+        Handles the snooze action by resetting the session alert timer based on the specified snooze duration.
         """
-        self.reset_session_alert_timer()
+        self.reset_session_alert_timer(snooze_duration)
         dialog.accept()
 
     def closeEvent(self, event):
@@ -772,26 +784,42 @@ class XbitoPomodoro(QMainWindow):
         )
         self.focus_summary_label.setText(summary_text)
 
-    def setup_session_alert_timer(self):
+    def setup_session_alert_timer(self, snooze_duration=None):
         """
-        Sets up a timer to alert the user if a session has not started within 10 minutes.
+        Sets up a timer to alert the user if a session has not started within the specified snooze duration.
         """
+        if snooze_duration is None:
+            snooze_duration_milliseconds = self.session_alert_miliseconds
+        else:
+            snooze_duration_milliseconds = snooze_duration * 60 * 1000
         print("Starting the session alert timer at", datetime.now())
+        print(
+            "Should alert at",
+            datetime.now() + timedelta(milliseconds=snooze_duration_milliseconds),
+        )
         self.session_alert_timer = QTimer(self)
         self.session_alert_timer.timeout.connect(self.trigger_session_alert)
-        self.session_alert_timer.start(self.session_alert_miliseconds)
+        self.session_alert_timer.start(snooze_duration_milliseconds)
 
-    def reset_session_alert_timer(self):
+    def reset_session_alert_timer(self, snooze_duration=None):
         """
         Resets the session alert timer.
         """
+        if snooze_duration is None:
+            snooze_duration_milliseconds = self.session_alert_miliseconds
+        else:
+            snooze_duration_milliseconds = snooze_duration * 60 * 1000
         print("Reset the session alert timer at", datetime.now())
-        self.session_alert_timer.start(self.session_alert_miliseconds)
+        print(
+            "Should alert at",
+            datetime.now() + timedelta(milliseconds=snooze_duration_milliseconds),
+        )
+        self.session_alert_timer.start(snooze_duration_milliseconds)
         self.session_alert_triggered = False  # Reset the session alert triggered flag
 
     def trigger_session_alert(self):
         """
-        Triggers an alert if no session has started within 10 minutes.
+        Triggers an alert if no session has started within the specified snooze duration.
         """
         if not self.is_timer_running and not self.session_alert_triggered:
             play_bell_sound()
