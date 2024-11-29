@@ -76,6 +76,8 @@ motivational_phrases = [
     "The world is not in your books and maps, it's out there.",
     "Courage will now be your best defense against the storm that is at hand.",
     "A wizard is never late, nor is he early, he arrives precisely when he means to.",
+    "Procrastinating puts you back in a place of comfort.",
+    "Great work happens by focusing consistently on something you're genuinely interested on",
 ]
 
 
