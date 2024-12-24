@@ -5,7 +5,6 @@ import platform
 import ctypes
 
 if platform.system() == "Windows":
-    import win32api
     import win32con
     import win32gui
 
@@ -833,15 +832,6 @@ class XbitoPomodoro(QMainWindow):
                 "You haven't started a session. Did you forget?",
                 show_snooze=True,
             )
-
-    def nativeEvent(self, eventType, message):
-        """Handle native Windows events including power notifications"""
-        if platform.system() == "Windows":
-            msg = ctypes.wintypes.MSG.from_address(int(message))
-            if msg.message == win32con.WM_POWERBROADCAST:
-                if msg.wParam == win32con.PBT_APMRESUMEAUTOMATIC:
-                    self.handle_resume_from_suspend()
-        return False, 0
 
     def handle_resume_from_suspend(self):
         """Handle computer resuming from suspend state"""

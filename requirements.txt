@@ -1,8 +1,8 @@
-PySide6==6.7.0
-pydub==0.25.1
-simpleaudio==1.0.4
-shiboken6==6.7.0
+PySide6
+pydub
+simpleaudio
+shiboken6
 pytest
 pytest-qt
 # Add pywin32 only on Windows
-pywin32==301; sys_platform == 'Windows'
+pywin32; sys_platform == 'Windows'
