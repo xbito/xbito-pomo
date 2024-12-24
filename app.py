@@ -658,14 +658,18 @@ class XbitoPomodoro(QMainWindow):
                 color: #ffffff;
             }
             QProgressBar {
-                background-color: #444444;
-                color: #ffffff;
-                border-radius: 5px;
+                background-color: #2B2B2B;
+                border: none;
+                border-radius: 2px;
                 text-align: center;
+                margin-top: 8px;
+                margin-bottom: 8px;
+                height: 4px;
+                max-height: 4px;
             }
             QProgressBar::chunk {
-                background-color: #22aa22;
-                width: 20px; /* Used to increase chunk size */
+                background-color: #4CAF50;
+                border-radius: 2px;
             }
             QDialog {
                 background-color: #333333;
