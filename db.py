@@ -137,3 +137,37 @@ def delete_setting(key):
     c.execute("DELETE FROM settings WHERE key = ?", (key,))
     conn.commit()
     conn.close()
+
+
+def fetch_yearly_daily_session_counts():
+    """
+    Returns a dictionary of { date_string (YYYY-MM-DD): session_count }
+    for each day in the last 365 days.
+    """
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+
+    # Prepare a dict for all days in the last year, initialized with 0
+    from datetime import datetime, timedelta
+
+    today = datetime.now().date()
+    daily_counts = {}
+    for i in range(365):
+        day = today - timedelta(days=i)
+        daily_counts[day.strftime("%Y-%m-%d")] = 0
+
+    # Count sessions per day
+    c.execute(
+        """
+        SELECT DATE(start_time) as sdate, COUNT(*) as cnt
+        FROM session_feedback
+        WHERE DATE(start_time) >= DATE('now', '-365 day')
+        GROUP BY DATE(start_time)
+        """
+    )
+    for row in c.fetchall():
+        if row[0] in daily_counts:
+            daily_counts[row[0]] = row[1]
+
+    conn.close()
+    return daily_counts

@@ -9,10 +9,18 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QHBoxLayout,
+    QWidget,
+    QGridLayout,
 )
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
-from db import fetch_last_10_report_sessions, get_setting, save_setting, delete_setting
+from db import (
+    fetch_last_10_report_sessions,
+    get_setting,
+    save_setting,
+    delete_setting,
+    fetch_yearly_daily_session_counts,
+)
 from motivation import get_motivational_phrase
 
 
@@ -123,11 +131,72 @@ class AppMenu:
         title_layout = QVBoxLayout()
         title_label = QLabel("<h1>Report</h1>")
         title_label.setAlignment(Qt.AlignCenter)
-        subtitle_label = QLabel("<p>Last 10 Sessions</p>")
-        subtitle_label.setAlignment(Qt.AlignCenter)
-        title_layout.addWidget(title_label)
-        title_layout.addWidget(subtitle_label)
-        layout.addLayout(title_layout)
+        layout.addWidget(title_label)
+
+        subtitle_label_year = QLabel("<h2>Sessions in the last year</h2>")
+        subtitle_label_year.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle_label_year)
+
+        # Create a "contribution-like" grid widget
+        daily_counts = fetch_yearly_daily_session_counts()
+
+        # Find Monday on or before the day 12 months ago
+        from datetime import datetime, timedelta
+
+        today = datetime.now().date()
+        start_date = today.replace(day=1) - timedelta(days=365)
+        while start_date.weekday() != 0:  # 0 = Monday
+            start_date -= timedelta(days=1)
+
+        # Create "contribution-like" grid
+        contrib_widget = QWidget()
+        contrib_layout = QGridLayout(contrib_widget)
+        contrib_layout.setSpacing(2)
+
+        # Day labels at left for Monday, Wednesday, Friday
+        day_labels = {0: "Mon", 2: "Wed", 4: "Fri"}
+
+        # Fill chart up to today
+        current = start_date
+        col_index = 0
+        last_month_shown = None
+
+        while current <= today:
+            week_of_year = (current - start_date).days // 7
+            row = current.weekday()  # 0..6 for Mon..Sun
+            if week_of_year != col_index:
+                col_index = week_of_year
+            # Label for day of week (left side)
+            if row in day_labels and col_index == 0:
+                label_day = QLabel(day_labels[row])
+                contrib_layout.addWidget(label_day, row + 1, 0)
+            # Month label on top if it's the first day (Monday) of a new month
+            if row == 0:  # Monday
+                month_label = current.strftime("%b")
+                if month_label != last_month_shown:
+                    lbl = QLabel(month_label)
+                    lbl.setAlignment(Qt.AlignCenter)
+                    contrib_layout.addWidget(lbl, 0, col_index + 1)
+                    last_month_shown = month_label
+
+            # Create the colored cell
+            date_str = current.strftime("%Y-%m-%d")
+            count = daily_counts.get(date_str, 0)
+            shade = min(count, 5) * 40
+            cell = QLabel()
+            cell.setToolTip(f"{current.strftime('%B %d')}: {count}")
+            cell.setStyleSheet(
+                f"background-color: rgba(0, 200, 0, {shade});"
+                "min-width: 10px; min-height: 10px;"
+            )
+            contrib_layout.addWidget(cell, row + 1, col_index + 1)
+            current += timedelta(days=1)
+
+        layout.addWidget(contrib_widget)
+
+        subtitle_label_last_10 = QLabel("<h2>Last 10 Sessions details</h2>")
+        subtitle_label_last_10.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle_label_last_10)
 
         table_widget = QTableWidget()
         table_widget.setColumnCount(3)
