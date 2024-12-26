@@ -11,7 +11,9 @@ class MultiColorProgressBar(QProgressBar):
             (0.3, 0.7, QColor("#FFA726")),  # Muted orange for mid-day
             (0.7, 1.0, QColor("#EF5350")),  # Muted red for evening
         ]
-        self.setTextVisible(False)  # Hide the percentage text
+        self.setTextVisible(True)
+        self.setFormat("%p%")
+        self.setStyleSheet("QProgressBar { color: white; }")
 
     def paintEvent(self, event):
         painter = QPainter(self)
