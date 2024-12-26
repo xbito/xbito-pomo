@@ -350,6 +350,9 @@ class XbitoPomodoro(QMainWindow):
         This method gets the current date and formats it into separate labels for the day, date, month, and year.
         It also sets the styles and alignments for each label, and adds them to the main layout of the dialog.
         """
+        # Store the initial date in self.current_date
+        self.current_date = QDate.currentDate()
+
         # Get the current date
         current_date = QDate.currentDate()
 
@@ -396,6 +399,25 @@ class XbitoPomodoro(QMainWindow):
 
         # Add the date and day layout to the main layout of the dialog
         self.layout.addLayout(date_day_layout)
+
+        # Create a timer to check date changes every minute
+        self.date_refresh_timer = QTimer(self)
+        self.date_refresh_timer.timeout.connect(self.update_date_day_label)
+        self.date_refresh_timer.start(60000 * 30)  # every 1/2 hour
+
+    def update_date_day_label(self):
+        new_date = QDate.currentDate()
+        if new_date != self.current_date:
+            self.current_date = new_date
+            # Update the labels
+            date_text = new_date.toString("dd")
+            month_text = new_date.toString("MMM")
+            year_text = new_date.toString("yyyy")
+            day_text = new_date.toString("dddd")
+            self.date_label.setText(date_text)
+            self.month_label.setText(month_text)
+            self.year_label.setText(year_text)
+            self.day_label.setText(day_text)
 
     def setup_progress_bar(self):
         self.progress_bar = MultiColorProgressBar(self)
