@@ -51,11 +51,28 @@ class AppMenu:
 
     def show_about_dialog(self):
         about_text = """
-        <h1>Xbito - Pomodoro Timer</h1>
-        <p>Version 0.5</p>
-        <p>Developed by <a href="https://github.com/xbito/">Xbito</a></p>
-        <p>With help from GitHub Copilot</p>
-        <p>Visit us at <a href="https://github.com/xbito/xbito-pomo">Github</a></p>
+        <div style="font-family: Arial, sans-serif; padding: 10px;">
+            <h1 style="color: #4CAF50; margin-bottom: 10px;">Xbito - Pomodoro Timer</h1>
+            <p style="font-size: 16px;">Version 0.5</p>
+            <p style="font-size: 16px;">
+                Developed by
+                <a href="https://github.com/xbito/"
+                   style="color: #33dd33; text-decoration: none; font-weight: bold;">
+                   Xbito
+                </a>
+            </p>
+            <p style="font-size: 16px;">
+                With help from
+                <b>GitHub Copilot</b>
+            </p>
+            <p style="font-size: 16px;">
+                Visit us at
+                <a href="https://github.com/xbito/xbito-pomo"
+                   style="color: #33dd33; text-decoration: none; font-weight: bold;">
+                   GitHub
+                </a>
+            </p>
+        </div>
         """
         self.parent.show_dialog("About", about_text)
 
