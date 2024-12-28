@@ -47,6 +47,7 @@ motivational_phrases = [
     "The only way to do great work is to love what you do.",
     "Believe in yourself and your abilities.",
     "All we have to decide is what to do with the time that is given us.",
+    "Even one step a day gets you 365 steps farther in a year.",
 ]
 
 
