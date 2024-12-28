@@ -38,6 +38,7 @@ from yoga import get_desk_yoga_stretch
 
 from sound import play_celebratory_melody, play_rest_end_melody, play_bell_sound
 from menu import AppMenu
+from style import load_dark_theme
 
 
 class XbitoPomodoro(QMainWindow):
@@ -89,7 +90,7 @@ class XbitoPomodoro(QMainWindow):
         self.setup_motivational_phrase()
         self.setup_focus_summary()
         self.menu = AppMenu(self)  # Initialize the AppMenu
-        self.apply_dark_theme()
+        self.setStyleSheet(load_dark_theme())
         self.adjustSize()
         self.setup_session_alert_timer()  # Add this line to initialize the session alert timer
 
@@ -211,11 +212,11 @@ class XbitoPomodoro(QMainWindow):
         and connects them to their respective functions.
         """
         self.start_pause_button = QPushButton("Start")
-        self.start_pause_button.setStyleSheet("font-size: 18px; padding: 5px;")
+        self.start_pause_button.setObjectName("startPauseButton")
         self.start_pause_button.clicked.connect(self.toggle_timer)
 
         self.reset_button = QPushButton("Reset")
-        self.reset_button.setStyleSheet("font-size: 18px; padding: 5px;")
+        self.reset_button.setObjectName("resetButton")
         self.reset_button.clicked.connect(self.click_reset_timer)
 
         button_layout = QHBoxLayout()
@@ -249,7 +250,7 @@ class XbitoPomodoro(QMainWindow):
 
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label = QLabel(f"{minutes:02d}:{seconds:02d}")
-        self.countdown_label.setStyleSheet("font-size: 24px;")
+        self.countdown_label.setObjectName("countdownLabel")
         self.countdown_label.setAlignment(Qt.AlignCenter)
         # Add the countdown label to the controls layout
         self.controls_layout.addWidget(self.countdown_label)
@@ -320,11 +321,9 @@ class XbitoPomodoro(QMainWindow):
         Add a timer to update the motivational phrase every 6 hours.
         """
         self.motivational_phrase_label = QLabel(self.phrase)
+        self.motivational_phrase_label.setObjectName("motivationalPhraseLabel")
         self.motivational_phrase_label.setWordWrap(True)  # Enable word wrapping
         self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
-        self.motivational_phrase_label.setStyleSheet(
-            "font-size: 15px; font-weight: bold;"
-        )
         self.layout.insertWidget(0, self.motivational_phrase_label)
         self.update_motivational_phrase_timer = QTimer(self)
         self.update_motivational_phrase_timer.timeout.connect(
@@ -364,19 +363,13 @@ class XbitoPomodoro(QMainWindow):
 
         # Create labels
         self.date_label = QLabel(date_text)
+        self.date_label.setObjectName("dateLabel")
         self.month_label = QLabel(month_text)
+        self.month_label.setObjectName("monthLabel")
         self.year_label = QLabel(year_text)
+        self.year_label.setObjectName("yearLabel")
         self.day_label = QLabel(day_text)
-
-        # Set styles
-        self.date_label.setStyleSheet(
-            "color: white; font-size: 50px; font-weight: bold;"
-        )
-        self.month_label.setStyleSheet(
-            "color: white; font-size: 18px; font-weight: bold;"
-        )
-        self.year_label.setStyleSheet("color: white; font-size: 18px;")
-        self.day_label.setStyleSheet("color: white; font-size: 18px;")
+        self.day_label.setObjectName("dayLabel")
 
         # Align text
         self.date_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
@@ -653,74 +646,6 @@ class XbitoPomodoro(QMainWindow):
         else:
             progress = (current_seconds / total_day_seconds) * 100
         self.progress_bar.setValue(int(progress))
-
-    def apply_dark_theme(self):
-        # Set the dark theme for the window
-        self.setStyleSheet(
-            """
-            QMainWindow {
-                background-color: #333333;
-                color: #ffffff;
-            }
-            QPushButton {
-                background-color: #555555;
-                color: #ffffff;
-                border: 1px solid #777777;
-                padding: 5px;
-            }
-            QPushButton:hover {
-                background-color: #666666;
-            }
-            QPushButton:disabled {
-                background-color: #444444;
-                color: #aaaaaa;
-            }
-            QLabel {
-                color: #ffffff;
-            }
-            QProgressBar {
-                background-color: #2B2B2B;
-                border: none;
-                border-radius: 2px;
-                text-align: center;
-                margin-top: 8px;
-                margin-bottom: 8px;
-                height: 4px;
-                max-height: 4px;
-            }
-            QProgressBar::chunk {
-                background-color: #4CAF50;
-                border-radius: 2px;
-            }
-            QDialog {
-                background-color: #333333;
-                color: #ffffff;
-            }
-
-            QLabel {
-                color: #ffffff;
-            }
-
-            QLabel#about_title {
-                font-size: 24px;
-                font-weight: bold;
-                margin-bottom: 10px;
-            }
-
-            QLabel#about_text {
-                margin-bottom: 20px;
-            }
-
-            QLabel#about_link {
-                color: #22aa22;
-                text-decoration: none;
-            }
-
-            QLabel#about_link:hover {
-                text-decoration: underline;
-            }
-        """
-        )
 
     def show_dialog(self, title, text, show_snooze=False):
         """
