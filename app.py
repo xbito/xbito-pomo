@@ -3,6 +3,8 @@ import sys
 import logging
 import platform
 import ctypes
+import random
+from PySide6.QtGui import QPainter, QPen, QBrush, QColor
 
 if platform.system() == "Windows":
     import win32con
@@ -41,6 +43,113 @@ from menu import AppMenu
 from style import load_dark_theme
 
 
+class TreeWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.stage = 1
+        # Create random colors for fruit, leaves, and flowers:
+        self.fruit_color = self.random_color()
+        self.leaf_color = self.random_color()
+        self.flower_color = self.random_color()
+
+    def random_color(self):
+        return "#{:06x}".format(random.randint(0, 0xFFFFFF))
+
+    def set_stage(self, stage):
+        self.stage = min(max(stage, 1), 5)
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw trunk
+        painter.setPen(QPen(Qt.black, 4))
+        painter.drawLine(
+            self.width() // 2,
+            self.height(),
+            self.width() // 2,
+            int(self.height() * 0.55),
+        )
+
+        if self.stage == 1:
+            # Simple trunk plus a couple of small leaves on top
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor(self.leaf_color)))
+            painter.drawEllipse(
+                self.width() // 2 - 5, int(self.height() * 0.55) - 10, 10, 10
+            )
+        elif self.stage == 2:
+            # A slightly taller trunk plus two small branches with leaves
+            painter.setPen(QPen(Qt.black, 2))
+            painter.drawLine(
+                self.width() // 2,
+                int(self.height() * 0.60),
+                self.width() // 2 - 20,
+                int(self.height() * 0.50),
+            )
+            painter.drawLine(
+                self.width() // 2,
+                int(self.height() * 0.60),
+                self.width() // 2 + 20,
+                int(self.height() * 0.50),
+            )
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor(self.leaf_color)))
+            painter.drawEllipse(
+                self.width() // 2 - 25, int(self.height() * 0.50) - 5, 10, 10
+            )
+            painter.drawEllipse(
+                self.width() // 2 + 15, int(self.height() * 0.50) - 5, 10, 10
+            )
+            # Small cluster of leaves at top
+            painter.drawEllipse(
+                self.width() // 2 - 5, int(self.height() * 0.55) - 10, 10, 10
+            )
+        else:
+            # ...existing code...
+            # Example for stages above 2:
+            if self.stage > 2:
+                # More branches
+                painter.setPen(QPen(Qt.black, 2))
+                painter.drawLine(
+                    self.width() // 2 - 20,
+                    int(self.height() * 0.50),
+                    self.width() // 2 - 30,
+                    int(self.height() * 0.40),
+                )
+                painter.drawLine(
+                    self.width() // 2 + 20,
+                    int(self.height() * 0.50),
+                    self.width() // 2 + 30,
+                    int(self.height() * 0.40),
+                )
+            if self.stage > 3:
+                # Flowers
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(QColor(self.flower_color)))
+                painter.drawEllipse(
+                    self.width() // 2 - 32, int(self.height() * 0.40) - 5, 6, 6
+                )
+                painter.drawEllipse(
+                    self.width() // 2 + 26, int(self.height() * 0.40) - 5, 6, 6
+                )
+            if self.stage > 4:
+                # Fruits
+                painter.setBrush(QBrush(QColor(self.fruit_color)))
+                painter.drawEllipse(
+                    self.width() // 2 - 20, int(self.height() * 0.52), 8, 8
+                )
+                painter.drawEllipse(
+                    self.width() // 2 + 12, int(self.height() * 0.48), 8, 8
+                )
+            # Always draw some top leaves for stages > 2
+            painter.setBrush(QBrush(QColor(self.leaf_color)))
+            painter.drawEllipse(
+                self.width() // 2 - 5, int(self.height() * 0.55) - 10, 12, 12
+            )
+
+
 class XbitoPomodoro(QMainWindow):
     def __init__(self, app, phrase):
         self.debug_mode = (
@@ -74,6 +183,8 @@ class XbitoPomodoro(QMainWindow):
         self.is_timer_running = False  # Track timer state
         self.session_alert_triggered = False  # Track if the alert has been triggered
         super().__init__()
+        self.tree_widget = TreeWidget()
+        self.tree_current_date = QDate.currentDate()  # For daily resets
         self.setup_window()
         # Create a central widget and layout
         centralWidget = QWidget()
@@ -259,6 +370,32 @@ class XbitoPomodoro(QMainWindow):
         # Add the controls layout to the main layout
         self.layout.addLayout(self.controls_layout)
 
+        # Debug button to cycle the tree stage
+        if self.debug_mode:
+            self.next_stage_button = QPushButton("Next Tree Stage")
+            self.next_stage_button.clicked.connect(self.debug_cycle_tree_stage)
+            self.controls_layout.addWidget(self.next_stage_button)
+
+    def debug_cycle_tree_stage(self):
+        """Advance or reset the tree stage if in debug mode."""
+        if self.tree_widget.stage == 5:
+            # Reset to stage 1 with random new colors
+            self.completed_sessions = 0
+            # Remove and delete old tree
+            self.date_container_layout.removeWidget(self.tree_widget)
+            self.tree_widget.deleteLater()
+            # Create new one
+            new_tree = TreeWidget()
+            new_tree.setFixedWidth(120)
+            self.tree_widget = new_tree
+            self.date_container_layout.insertWidget(0, self.tree_widget, 0)
+            self.update_tree_stage()
+        else:
+            self.completed_sessions += 1
+            if self.completed_sessions > 5:
+                self.completed_sessions = 5
+            self.update_tree_stage()
+
     def setup_emoticon_buttons(self):
         """
         Set up the emoticon buttons in the user interface.
@@ -390,8 +527,15 @@ class XbitoPomodoro(QMainWindow):
         date_day_layout.addLayout(date_layout)
         date_day_layout.addWidget(self.day_label)
 
-        # Add the date and day layout to the main layout of the dialog
-        self.layout.addLayout(date_day_layout)
+        # Create date layout as before, but now place it in a horizontal layout with the tree:
+        self.date_container_layout = QHBoxLayout()  # store layout reference
+        self.date_container_layout.setSpacing(1)
+
+        self.tree_widget.setFixedWidth(120)  # Approx 30% width in that region
+        self.date_container_layout.addWidget(self.tree_widget, 0)
+        self.date_container_layout.addLayout(date_day_layout, 1)
+
+        self.layout.addLayout(self.date_container_layout)
 
         # Create a timer to check date changes every minute
         self.date_refresh_timer = QTimer(self)
@@ -402,6 +546,11 @@ class XbitoPomodoro(QMainWindow):
         new_date = QDate.currentDate()
         if new_date != self.current_date:
             self.current_date = new_date
+            # Reset completed sessions for new day:
+            self.completed_sessions = 0
+            self.tree_widget = TreeWidget()  # new random colors
+            self.tree_widget.setFixedWidth(120)
+            self.update_tree_stage()
             # Update the labels
             date_text = new_date.toString("dd")
             month_text = new_date.toString("MMM")
@@ -547,6 +696,7 @@ class XbitoPomodoro(QMainWindow):
             self.yoga_button.setEnabled(True)
             self.sad_button.setEnabled(True)
             self.completed_sessions += 1
+            self.update_tree_stage()
             if self.completed_sessions % self.sessions_before_long_rest == 0:
                 self.timer_type_label.setText("Next: Long Rest")
                 self.remaining_seconds = self.long_rest_seconds
@@ -564,6 +714,11 @@ class XbitoPomodoro(QMainWindow):
         self.update_countdown_display()
         self.reset_session_alert_timer()  # Reset the session alert timer when a session finishes normally
         self.session_alert_triggered = False  # Reset the session alert triggered flag
+
+    def update_tree_stage(self):
+        # Example: each session up to stage 5
+        new_stage = min(self.completed_sessions, 5)
+        self.tree_widget.set_stage(new_stage)
 
     def auto_update_countdown(self):
         """
