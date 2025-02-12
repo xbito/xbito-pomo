@@ -350,30 +350,20 @@ class XbitoPomodoro(QMainWindow):
 
     def setup_emoticon_buttons(self):
         """
-        Set up the emoticon buttons in the user interface.
-        Connect the buttons to the corresponding feedback recording functions.
-        Enable/disable the buttons based on the application's state.
-        Add tooltips to the buttons.
+        Set up the yoga button in the user interface.
+        Enable/disable the button based on the application's state.
+        Add tooltip to the button.
         """
-        self.happy_button = QPushButton("👍")
         self.yoga_button = QPushButton("🧘")
-        self.sad_button = QPushButton("👎")
-        self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
         self.yoga_button.clicked.connect(self.show_yoga_stretch)
-        self.sad_button.clicked.connect(lambda: self.record_feedback("sad"))
-        # Add emoticon buttons to the layout
+        
+        # Add yoga button to the layout
         self.button_layout = QHBoxLayout()
-        self.button_layout.addWidget(self.happy_button)
         self.button_layout.addWidget(self.yoga_button)
-        self.button_layout.addWidget(self.sad_button)
         self.layout.addLayout(self.button_layout)
-        self.happy_button.setEnabled(False)
         self.yoga_button.setEnabled(False)
-        self.sad_button.setEnabled(False)
-        # Add tooltips to the emoticon buttons
-        self.happy_button.setToolTip("Happy/Positive")
+        # Add tooltip to the yoga button
         self.yoga_button.setToolTip("Yoga Stretch")
-        self.sad_button.setToolTip("Sad/Negative")
 
     def show_yoga_stretch(self):
         """
@@ -540,7 +530,7 @@ class XbitoPomodoro(QMainWindow):
         Starts the timer based on the current timer type.
 
         This method sets the start time of the session, starts the timer, and updates the UI to reflect the timer's state.
-        It also disables the happy, yoga, and sad buttons to prevent user input during the session.
+        It also disables the yoga button to prevent user input during the session.
         """
         if not self.is_timer_running:
             # Only set the start time if the timer is not already running
@@ -548,9 +538,7 @@ class XbitoPomodoro(QMainWindow):
         self.timer.start(1000)  # Update every second
         self.is_timer_running = True
         self.start_pause_button.setText("Pause")
-        self.happy_button.setEnabled(False)
         self.yoga_button.setEnabled(False)
-        self.sad_button.setEnabled(False)
         # If timer type label is "Next: Rest", change it to "Rest" when starting the timer
         if (
             self.timer_type_label.text() == "Next: Rest"
@@ -563,7 +551,7 @@ class XbitoPomodoro(QMainWindow):
             self.timer_type = "Focus"
         # If after changing the timer_type it is Focus then record the start time
         if self.timer_type == "Focus":
-            insert_pomodoro_session(self.start_time, None, "pending")
+            insert_pomodoro_session(self.start_time, None, None)  # No status needed until completion
         self.reset_session_alert_timer()  # Reset the session alert timer when a session starts
         self.session_alert_triggered = False  # Reset the session alert triggered flag
 
@@ -575,16 +563,12 @@ class XbitoPomodoro(QMainWindow):
         - Stops the timer
         - Sets the timer running flag to False
         - Changes the start/pause button text to "Start"
-        - Enables the happy, yoga, and sad buttons
-
-        This allows the user to pause their current session and provide feedback if needed.
+        - Enables the yoga button
         """
         self.timer.stop()
         self.is_timer_running = False
         self.start_pause_button.setText("Start")
-        self.happy_button.setEnabled(True)
         self.yoga_button.setEnabled(True)
-        self.sad_button.setEnabled(True)
         self.reset_session_alert_timer()  # Reset the session alert timer when a pause happens
         self.session_alert_triggered = False  # Reset the session alert triggered flag
 
@@ -593,7 +577,7 @@ class XbitoPomodoro(QMainWindow):
         Resets the timer to its initial state.
 
         This method stops the timer, resets the remaining seconds to the initial duration,
-        updates the countdown label and button text, disables the happy and sad buttons,
+        updates the countdown label and button text, disables the yoga button,
         and sets the timer running flag to False.
         """
         self.timer.stop()
@@ -611,9 +595,7 @@ class XbitoPomodoro(QMainWindow):
         self.update_countdown_display()
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
-        self.happy_button.setEnabled(False)
         self.yoga_button.setEnabled(False)
-        self.sad_button.setEnabled(False)
         if not from_feedback:
             # On Reset always set the timer type to Focus, but if coming from Feedback let the natural flow go on.
             self.timer_type = "Focus"
@@ -625,7 +607,7 @@ class XbitoPomodoro(QMainWindow):
         """
         A session has completed.
         - changes the start/pause button text to "Start",
-        - enables the feedback buttons
+        - enables the yoga button
         - attempts to play a melody. If an error occurs while playing the melody, logs the error.
         """
         self.timer.stop()
@@ -644,9 +626,7 @@ class XbitoPomodoro(QMainWindow):
                 play_celebratory_melody()
             except Exception as e:
                 logging.error(f"Error playing melody: {e}")
-            self.happy_button.setEnabled(True)
             self.yoga_button.setEnabled(True)
-            self.sad_button.setEnabled(True)
             self.completed_sessions += 1
             self.update_tree_stage()
             if self.completed_sessions % self.sessions_before_long_rest == 0:
@@ -712,20 +692,6 @@ class XbitoPomodoro(QMainWindow):
         """
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
-
-    def record_feedback(self, feeling):
-        """
-        Records the feedback for a completed pomodoro session.
-
-        Args:
-            feeling (str): The feeling associated with the completed session.
-
-        """
-        if self.start_time:
-            end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            update_pomodoro_session(self.start_time, end_time, feeling)
-            self.start_time = None  # Reset start time after recording feedback
-            self.click_reset_timer(from_feedback=True)
 
     def update_progress_bar(self):
         """

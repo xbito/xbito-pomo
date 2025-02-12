@@ -216,19 +216,17 @@ class AppMenu:
         layout.addWidget(subtitle_label_last_10)
 
         table_widget = QTableWidget()
-        table_widget.setColumnCount(3)
-        table_widget.setHorizontalHeaderLabels(["Start Time", "End Time", "Feeling"])
+        table_widget.setColumnCount(2)  # Reduced from 3 to 2 columns
+        table_widget.setHorizontalHeaderLabels(["Start Time", "End Time"])  # Removed "Feeling"
 
         report_sessions = fetch_last_10_report_sessions()
         table_widget.setRowCount(len(report_sessions))
         for row, session in enumerate(report_sessions):
             start_time = QTableWidgetItem(session["start_time"])
             end_time = QTableWidgetItem(session["end_time"])
-            feeling = QTableWidgetItem(str(session["feeling"]))
 
             table_widget.setItem(row, 0, start_time)
             table_widget.setItem(row, 1, end_time)
-            table_widget.setItem(row, 2, feeling)
 
         table_widget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table_widget.setSelectionBehavior(QAbstractItemView.SelectRows)

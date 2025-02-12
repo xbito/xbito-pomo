@@ -1,13 +1,72 @@
 import sqlite3
 from datetime import datetime, timedelta
 
+def get_db_version():
+    """Get the current database version"""
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    try:
+        c.execute("SELECT value FROM settings WHERE key = 'db_version'")
+        version = c.fetchone()
+        return int(version[0]) if version else 0
+    except sqlite3.OperationalError:
+        # If settings table doesn't exist, we're at version 0
+        return 0
+    finally:
+        conn.close()
+
+def run_migrations():
+    """Run any pending database migrations"""
+    current_version = get_db_version()
+    
+    if current_version < 1:
+        # Migration to version 1: Remove feeling column and update schema
+        conn = sqlite3.connect("pomodoro_sessions.db")
+        c = conn.cursor()
+        
+        # Create new table without feeling column
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS session_feedback_new
+            (start_time TEXT, end_time TEXT)
+        """)
+        
+        # Copy data from old table if it exists
+        try:
+            c.execute("""
+                INSERT INTO session_feedback_new (start_time, end_time)
+                SELECT start_time, end_time FROM session_feedback
+            """)
+        except sqlite3.OperationalError:
+            # Old table might not exist, that's fine
+            pass
+            
+        # Drop old table and rename new one
+        c.execute("DROP TABLE IF EXISTS session_feedback")
+        c.execute("ALTER TABLE session_feedback_new RENAME TO session_feedback")
+        
+        # Update version in settings
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS settings
+            (key TEXT PRIMARY KEY, value INTEGER)
+        """)
+        c.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES ('db_version', 1)"
+        )
+        
+        conn.commit()
+        conn.close()
 
 def init_db():
+    """Initialize the database and run any pending migrations"""
+    # Run migrations first
+    run_migrations()
+    
+    # Then ensure all tables exist with current schema
     conn = sqlite3.connect("pomodoro_sessions.db")
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS session_feedback
-                 (start_time TEXT, end_time TEXT, feeling TEXT)"""
+                 (start_time TEXT, end_time TEXT)"""
     )
     c.execute(
         """CREATE TABLE IF NOT EXISTS settings
@@ -16,30 +75,29 @@ def init_db():
     conn.commit()
     conn.close()
 
-
-def insert_pomodoro_session(start_time, end_time, feeling):
+def insert_pomodoro_session(start_time, end_time, _unused):
     if not start_time:
         return  # Do not proceed if start_time is not set
     # Function to insert a session record into the database
     conn = sqlite3.connect("pomodoro_sessions.db")
     c = conn.cursor()
     c.execute(
-        "INSERT INTO session_feedback (start_time, end_time, feeling) VALUES (?, ?, ?)",
-        (start_time, end_time, feeling),
+        "INSERT INTO session_feedback (start_time, end_time) VALUES (?, ?)",
+        (start_time, end_time),
     )
     conn.commit()
     conn.close()
 
 
-def update_pomodoro_session(start_time, end_time, feeling):
+def update_pomodoro_session(start_time, end_time, _unused):
     if not start_time:
         return  # Do not proceed if start_time is not set
-    # Function to insert a session record into the database
+    # Function to update a session record in the database
     conn = sqlite3.connect("pomodoro_sessions.db")
     c = conn.cursor()
     c.execute(
-        "UPDATE session_feedback SET end_time = ?, feeling = ? WHERE start_time = ?",
-        (end_time, feeling, start_time),
+        "UPDATE session_feedback SET end_time = ? WHERE start_time = ?",
+        (end_time, start_time),
     )
     conn.commit()
     conn.close()
