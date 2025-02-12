@@ -4,7 +4,7 @@ import logging
 import platform
 import ctypes
 import random
-from PySide6.QtGui import QPainter, QPen, QBrush, QColor
+from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPixmap
 
 if platform.system() == "Windows":
     import win32con
@@ -47,107 +47,59 @@ class TreeWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.stage = 1
-        # Create random colors for fruit, leaves, and flowers:
-        self.fruit_color = self.random_color()
-        self.leaf_color = self.random_color()
-        self.flower_color = self.random_color()
+        self.load_tree_images()
 
-    def random_color(self):
-        return "#{:06x}".format(random.randint(0, 0xFFFFFF))
+    def load_tree_images(self):
+        """Load tree stage images from assets folder"""
+        self.tree_images = {}
+        for i in range(1, 5):  # Stages 1-4
+            image_path = f"assets/tree_stage{i}.png"
+            self.tree_images[i] = QPixmap(image_path)
 
     def set_stage(self, stage):
-        self.stage = min(max(stage, 1), 5)
+        """Set the tree growth stage (1-4)"""
+        print(f"Stage before: {self.stage}")
+        self.stage = min(max(stage, 1), 4)  # Clamp between 1 and 4
         self.update()
+        print(f"Stage after: {self.stage}")
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # Draw trunk
-        painter.setPen(QPen(Qt.black, 4))
-        painter.drawLine(
-            self.width() // 2,
-            self.height(),
-            self.width() // 2,
-            int(self.height() * 0.55),
-        )
-
-        if self.stage == 1:
-            # Simple trunk plus a couple of small leaves on top
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(QColor(self.leaf_color)))
-            painter.drawEllipse(
-                self.width() // 2 - 5, int(self.height() * 0.55) - 10, 10, 10
+        if self.stage in self.tree_images:
+            painter = QPainter(self)
+            pixmap = self.tree_images[self.stage]
+            
+            # Define scaling factors for each stage
+            scale_factors = {
+                1: 0.8,  # 20% smaller
+                2: 0.8,  # 20% smaller
+                3: 1.2,  # 20% bigger
+                4: 1.28  # 28% bigger
+            }
+            
+            # Get base size that would fit the widget while maintaining aspect ratio
+            base_scaled_pixmap = pixmap.scaled(
+                self.size(),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
             )
-        elif self.stage == 2:
-            # A slightly taller trunk plus two small branches with leaves
-            painter.setPen(QPen(Qt.black, 2))
-            painter.drawLine(
-                self.width() // 2,
-                int(self.height() * 0.60),
-                self.width() // 2 - 20,
-                int(self.height() * 0.50),
+            
+            # Apply the stage-specific scaling
+            scale_factor = scale_factors[self.stage]
+            final_width = int(base_scaled_pixmap.width() * scale_factor)
+            final_height = int(base_scaled_pixmap.height() * scale_factor)
+            
+            # Scale with the stage-specific factor
+            final_scaled_pixmap = pixmap.scaled(
+                final_width,
+                final_height,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
             )
-            painter.drawLine(
-                self.width() // 2,
-                int(self.height() * 0.60),
-                self.width() // 2 + 20,
-                int(self.height() * 0.50),
-            )
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(QColor(self.leaf_color)))
-            painter.drawEllipse(
-                self.width() // 2 - 25, int(self.height() * 0.50) - 5, 10, 10
-            )
-            painter.drawEllipse(
-                self.width() // 2 + 15, int(self.height() * 0.50) - 5, 10, 10
-            )
-            # Small cluster of leaves at top
-            painter.drawEllipse(
-                self.width() // 2 - 5, int(self.height() * 0.55) - 10, 10, 10
-            )
-        else:
-            # ...existing code...
-            # Example for stages above 2:
-            if self.stage > 2:
-                # More branches
-                painter.setPen(QPen(Qt.black, 2))
-                painter.drawLine(
-                    self.width() // 2 - 20,
-                    int(self.height() * 0.50),
-                    self.width() // 2 - 30,
-                    int(self.height() * 0.40),
-                )
-                painter.drawLine(
-                    self.width() // 2 + 20,
-                    int(self.height() * 0.50),
-                    self.width() // 2 + 30,
-                    int(self.height() * 0.40),
-                )
-            if self.stage > 3:
-                # Flowers
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(QColor(self.flower_color)))
-                painter.drawEllipse(
-                    self.width() // 2 - 32, int(self.height() * 0.40) - 5, 6, 6
-                )
-                painter.drawEllipse(
-                    self.width() // 2 + 26, int(self.height() * 0.40) - 5, 6, 6
-                )
-            if self.stage > 4:
-                # Fruits
-                painter.setBrush(QBrush(QColor(self.fruit_color)))
-                painter.drawEllipse(
-                    self.width() // 2 - 20, int(self.height() * 0.52), 8, 8
-                )
-                painter.drawEllipse(
-                    self.width() // 2 + 12, int(self.height() * 0.48), 8, 8
-                )
-            # Always draw some top leaves for stages > 2
-            painter.setBrush(QBrush(QColor(self.leaf_color)))
-            painter.drawEllipse(
-                self.width() // 2 - 5, int(self.height() * 0.55) - 10, 12, 12
-            )
+            
+            # Center the image in the widget
+            x = (self.width() - final_scaled_pixmap.width()) // 2
+            y = (self.height() - final_scaled_pixmap.height()) // 2
+            painter.drawPixmap(x, y, final_scaled_pixmap)
 
 
 class XbitoPomodoro(QMainWindow):
@@ -378,22 +330,22 @@ class XbitoPomodoro(QMainWindow):
 
     def debug_cycle_tree_stage(self):
         """Advance or reset the tree stage if in debug mode."""
-        if self.tree_widget.stage == 5:
-            # Reset to stage 1 with random new colors
+        if self.tree_widget.stage == 4:  # Changed from 5 to 4 since we now have 4 stages
+            # Reset to stage 1
             self.completed_sessions = 0
             # Remove and delete old tree
             self.date_container_layout.removeWidget(self.tree_widget)
             self.tree_widget.deleteLater()
             # Create new one
             new_tree = TreeWidget()
-            new_tree.setFixedWidth(120)
+            new_tree.setFixedWidth(80)
             self.tree_widget = new_tree
             self.date_container_layout.insertWidget(0, self.tree_widget, 0)
             self.update_tree_stage()
         else:
             self.completed_sessions += 1
-            if self.completed_sessions > 5:
-                self.completed_sessions = 5
+            if self.completed_sessions > 4:  # Changed from 5 to 4
+                self.completed_sessions = 4
             self.update_tree_stage()
 
     def setup_emoticon_buttons(self):
@@ -531,7 +483,7 @@ class XbitoPomodoro(QMainWindow):
         self.date_container_layout = QHBoxLayout()  # store layout reference
         self.date_container_layout.setSpacing(1)
 
-        self.tree_widget.setFixedWidth(120)  # Approx 30% width in that region
+        self.tree_widget.setFixedWidth(80)  # Approx 30% width in that region
         self.date_container_layout.addWidget(self.tree_widget, 0)
         self.date_container_layout.addLayout(date_day_layout, 1)
 
@@ -549,7 +501,7 @@ class XbitoPomodoro(QMainWindow):
             # Reset completed sessions for new day:
             self.completed_sessions = 0
             self.tree_widget = TreeWidget()  # new random colors
-            self.tree_widget.setFixedWidth(120)
+            self.tree_widget.setFixedWidth(80)
             self.update_tree_stage()
             # Update the labels
             date_text = new_date.toString("dd")
@@ -716,8 +668,7 @@ class XbitoPomodoro(QMainWindow):
         self.session_alert_triggered = False  # Reset the session alert triggered flag
 
     def update_tree_stage(self):
-        # Example: each session up to stage 5
-        new_stage = min(self.completed_sessions, 5)
+        new_stage = min(self.completed_sessions + 1, 4)
         self.tree_widget.set_stage(new_stage)
 
     def auto_update_countdown(self):
