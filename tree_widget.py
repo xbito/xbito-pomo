@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtCore import Qt
+import os
+import sys
 
 class TreeWidget(QWidget):
     def __init__(self, parent=None):
@@ -11,9 +13,19 @@ class TreeWidget(QWidget):
     def load_tree_images(self):
         """Load tree stage images from assets folder"""
         self.tree_images = {}
+        # Get the directory where the executable is located
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            base_path = sys._MEIPASS
+        else:
+            # Running as script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            
         for i in range(1, 5):  # Stages 1-4
-            image_path = f"assets/tree_stage{i}.png"
+            image_path = os.path.join(base_path, 'assets', f'tree_stage{i}.png')
             self.tree_images[i] = QPixmap(image_path)
+            if self.tree_images[i].isNull():
+                print(f"Failed to load image: {image_path}")
 
     def set_stage(self, stage):
         """Set the tree growth stage (1-4)"""
