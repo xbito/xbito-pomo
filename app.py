@@ -2,9 +2,7 @@ import os
 import sys
 import logging
 import platform
-import ctypes
-import random
-from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPixmap
+from PySide6.QtGui import QPainter, QPixmap
 
 if platform.system() == "Windows":
     import win32con

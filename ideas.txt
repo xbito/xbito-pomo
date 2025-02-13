@@ -1,7 +1,3 @@
-Show Today Focus Time in total.
-Show Yesterday Focus Time in total.
-Show Last 7 days Focus Time in average per day.
-
 Could the app check what you are doing in your PC?
     Seems like yes: https://chatgpt.com/c/3cece7ee-e43e-432f-af69-b08d062fb7a8 
     Even if the app is Chrome we could get the Tab out of the Window title it seems.
@@ -9,11 +5,6 @@ Could the app check what you are doing in your PC?
 Maybe the app should connect to Google Calendar so it can:
     Detect a meeting, count it as pomodoro time. (How to detect a meeting?)
     Warn that a meeting is coming? (How to detect a meeting?)
-
-Add an options menu with:
-    Configuration: Default Focus time. Default Rest time. Deactivate Rest transition?
-
-Add animation of a Tomato plant growing. And a Tomato field of tomato plants. (Similar to Forest app)
 
 Add a light/dark option. Currently it's dark theme only.
 
@@ -23,8 +14,6 @@ Add Detailed reports like Focus To-Do https://apps.microsoft.com/detail/9n8gpb2t
 Integrate with YouTube Music.
 
 Provide some Ambient White Noise?
-
-Add Long Breaks support?
 
 Integrate with Gitlab?
 

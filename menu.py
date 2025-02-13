@@ -16,9 +16,6 @@ from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from db import (
     fetch_last_10_report_sessions,
-    get_setting,
-    save_setting,
-    delete_setting,
     fetch_yearly_daily_session_counts,
 )
 from motivation import get_motivational_phrase
