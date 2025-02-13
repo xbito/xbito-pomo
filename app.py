@@ -2,12 +2,7 @@ import os
 import sys
 import logging
 import platform
-from PySide6.QtGui import QPainter, QPixmap
-
-if platform.system() == "Windows":
-    import win32con
-    import win32gui
-
+from datetime import datetime, time, timedelta
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -21,8 +16,11 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QTimer, Qt, QDate
 
-from datetime import datetime, time, timedelta
+if platform.system() == "Windows":
+    import win32con
+    import win32gui
 
+from tree_widget import TreeWidget
 from MultiColorProgressBar import MultiColorProgressBar
 from db import (
     init_db,
@@ -35,70 +33,9 @@ from db import (
 )
 from motivation import get_motivational_phrase
 from yoga import get_desk_yoga_stretch
-
 from sound import play_celebratory_melody, play_rest_end_melody, play_bell_sound
 from menu import AppMenu
 from style import load_dark_theme
-
-
-class TreeWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.stage = 1
-        self.load_tree_images()
-
-    def load_tree_images(self):
-        """Load tree stage images from assets folder"""
-        self.tree_images = {}
-        for i in range(1, 5):  # Stages 1-4
-            image_path = f"assets/tree_stage{i}.png"
-            self.tree_images[i] = QPixmap(image_path)
-
-    def set_stage(self, stage):
-        """Set the tree growth stage (1-4)"""
-        print(f"Stage before: {self.stage}")
-        self.stage = min(max(stage, 1), 4)  # Clamp between 1 and 4
-        self.update()
-        print(f"Stage after: {self.stage}")
-
-    def paintEvent(self, event):
-        if self.stage in self.tree_images:
-            painter = QPainter(self)
-            pixmap = self.tree_images[self.stage]
-            
-            # Define scaling factors for each stage
-            scale_factors = {
-                1: 0.8,  # 20% smaller
-                2: 0.8,  # 20% smaller
-                3: 1.2,  # 20% bigger
-                4: 1.28  # 28% bigger
-            }
-            
-            # Get base size that would fit the widget while maintaining aspect ratio
-            base_scaled_pixmap = pixmap.scaled(
-                self.size(),
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
-            
-            # Apply the stage-specific scaling
-            scale_factor = scale_factors[self.stage]
-            final_width = int(base_scaled_pixmap.width() * scale_factor)
-            final_height = int(base_scaled_pixmap.height() * scale_factor)
-            
-            # Scale with the stage-specific factor
-            final_scaled_pixmap = pixmap.scaled(
-                final_width,
-                final_height,
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
-            
-            # Center the image in the widget
-            x = (self.width() - final_scaled_pixmap.width()) // 2
-            y = (self.height() - final_scaled_pixmap.height()) // 2
-            painter.drawPixmap(x, y, final_scaled_pixmap)
-
 
 class XbitoPomodoro(QMainWindow):
     def __init__(self, app, phrase):
