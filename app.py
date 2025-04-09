@@ -417,17 +417,32 @@ class XbitoPomodoro(QMainWindow):
         # Create a timer to check date changes every minute
         self.date_refresh_timer = QTimer(self)
         self.date_refresh_timer.timeout.connect(self.update_date_day_label)
-        self.date_refresh_timer.start(60000 * 30)  # every 1/2 hour
-
+        self.date_refresh_timer.start(60000 * 30)  # every 1/2 hour    
+    
     def update_date_day_label(self):
         new_date = QDate.currentDate()
         if new_date != self.current_date:
             self.current_date = new_date
             # Reset completed sessions for new day:
             self.completed_sessions = 0
+            
+            # Remove the old tree widget from the layout
+            old_tree = self.tree_widget
+            self.date_container_layout.removeWidget(old_tree)
+            
+            # Create a new tree widget
             self.tree_widget = TreeWidget()  # new random colors
             self.tree_widget.setFixedWidth(80)
+            
+            # Add the new tree widget to the layout at the same position
+            self.date_container_layout.insertWidget(0, self.tree_widget, 0)
+            
+            # Schedule the old tree for deletion later
+            old_tree.deleteLater()
+            
+            # Update tree stage to initial state
             self.update_tree_stage()
+            
             # Update the labels
             date_text = new_date.toString("dd")
             month_text = new_date.toString("MMM")
