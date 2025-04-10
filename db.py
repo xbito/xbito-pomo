@@ -1,5 +1,24 @@
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
+# Register date adapter explicitly to fix Python 3.12 deprecation warning
+def adapt_date(val):
+    return val.isoformat()
+
+def adapt_datetime(val):
+    return val.isoformat()
+
+def convert_date(val):
+    return date.fromisoformat(val.decode())
+
+def convert_datetime(val):
+    return datetime.fromisoformat(val.decode())
+
+# Register adapters and converters
+sqlite3.register_adapter(date, adapt_date)
+sqlite3.register_adapter(datetime, adapt_datetime)
+sqlite3.register_converter("DATE", convert_date)
+sqlite3.register_converter("DATETIME", convert_datetime)
 
 def get_db_version():
     """Get the current database version"""
