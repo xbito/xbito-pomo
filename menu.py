@@ -14,18 +14,24 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
+import sys
+import os
 from db import (
     fetch_last_10_report_sessions,
     fetch_yearly_daily_session_counts,
+    save_setting,
 )
-from motivation import get_motivational_phrase
+
+# Import Windows registry modules
+import platform
+if platform.system() == "Windows":
+    import winreg
 
 
 class AppMenu:
     def __init__(self, parent):
         self.parent = parent
         self.setup_menu()
-
     def setup_menu(self):
         menu_bar = self.parent.menuBar()
         menu = menu_bar.addMenu("Menu")
@@ -41,6 +47,14 @@ class AppMenu:
         report_action = QAction("Report", self.parent)
         report_action.triggered.connect(self.show_report_dialog)
         menu.addAction(report_action)
+
+        # Only show startup option on Windows
+        if platform.system() == "Windows":
+            startup_action = QAction("Launch at Startup", self.parent)
+            startup_action.setCheckable(True)
+            startup_action.setChecked(self.is_startup_enabled())
+            startup_action.triggered.connect(self.toggle_startup)
+            menu.addAction(startup_action)
 
         send_to_back_action = QAction("Send to Back", self.parent)
         send_to_back_action.triggered.connect(self.parent.send_to_back)
@@ -260,3 +274,76 @@ class AppMenu:
 
         report_dialog.setLayout(layout)
         report_dialog.exec()
+
+    def toggle_startup(self, state):
+        """
+        Enable or disable the application startup with Windows
+        
+        Args:
+            state (bool): True to add to startup, False to remove from startup
+        """
+        if platform.system() != "Windows":
+            return  # Only works on Windows
+
+        app_name = "XbitoPomodoroTimer"
+        
+        # Get the path to the executable
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            executable_path = sys.executable
+        else:
+            # Running as a script - we'll use pythonw.exe to avoid console window
+            executable_path = f'pythonw "{os.path.abspath(sys.argv[0])}"'
+        
+        try:
+            # Open the run key in Windows registry
+            registry_key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, 
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 
+                0, 
+                winreg.KEY_SET_VALUE | winreg.KEY_QUERY_VALUE
+            )
+            
+            if state:
+                # Add application to startup
+                winreg.SetValueEx(registry_key, app_name, 0, winreg.REG_SZ, executable_path)
+                save_setting("startup_enabled", 1)
+            else:
+                # Remove application from startup
+                try:
+                    winreg.DeleteValue(registry_key, app_name)
+                except FileNotFoundError:
+                    # Key wasn't there, which is fine
+                    pass
+                save_setting("startup_enabled", 0)
+            
+            winreg.CloseKey(registry_key)
+            return True
+        except Exception as e:
+            print(f"Error modifying startup registry: {e}")
+            return False
+            
+    def is_startup_enabled(self):
+        """Check if the application is set to start with Windows"""
+        if platform.system() != "Windows":
+            return False
+            
+        app_name = "XbitoPomodoroTimer"
+        
+        try:
+            registry_key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, 
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 
+                0, 
+                winreg.KEY_QUERY_VALUE
+            )
+            
+            try:
+                value, _ = winreg.QueryValueEx(registry_key, app_name)
+                winreg.CloseKey(registry_key)
+                return True
+            except FileNotFoundError:
+                winreg.CloseKey(registry_key)
+                return False
+        except Exception:
+            return False
