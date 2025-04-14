@@ -1,4 +1,6 @@
 import sqlite3
+import sys
+import os
 from datetime import datetime, timedelta, date
 
 # Register date adapter explicitly to fix Python 3.12 deprecation warning
@@ -20,9 +22,22 @@ sqlite3.register_adapter(datetime, adapt_datetime)
 sqlite3.register_converter("DATE", convert_date)
 sqlite3.register_converter("DATETIME", convert_datetime)
 
+def get_app_path():
+    """ Get the application base path for development and frozen pyinstaller execution modes """
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+def get_conn():
+    """ Get a connection to the database """
+    return sqlite3.connect(
+        os.path.join(get_app_path(), "pomodoro_sessions.db"),
+        detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+    )
+
 def get_db_version():
     """Get the current database version"""
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     try:
         c.execute("SELECT value FROM settings WHERE key = 'db_version'")
@@ -40,7 +55,7 @@ def run_migrations():
     
     if current_version < 1:
         # Migration to version 1: Remove feeling column and update schema
-        conn = sqlite3.connect("pomodoro_sessions.db")
+        conn = get_conn()
         c = conn.cursor()
         
         # Create new table without feeling column
@@ -81,7 +96,7 @@ def init_db():
     run_migrations()
     
     # Then ensure all tables exist with current schema
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS session_feedback
@@ -98,7 +113,7 @@ def insert_pomodoro_session(start_time, end_time, _unused):
     if not start_time:
         return  # Do not proceed if start_time is not set
     # Function to insert a session record into the database
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
         "INSERT INTO session_feedback (start_time, end_time) VALUES (?, ?)",
@@ -112,7 +127,7 @@ def update_pomodoro_session(start_time, end_time, _unused):
     if not start_time:
         return  # Do not proceed if start_time is not set
     # Function to update a session record in the database
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
         "UPDATE session_feedback SET end_time = ? WHERE start_time = ?",
@@ -124,7 +139,7 @@ def update_pomodoro_session(start_time, end_time, _unused):
 
 def fetch_last_10_report_sessions():
     # Function to fetch the last 10 sessions from the database
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     conn.row_factory = sqlite3.Row  # This allows us to access columns by name
     c = conn.cursor()
     c.execute(
@@ -141,7 +156,7 @@ def fetch_focus_summary():
     """
     Fetches a summary of Focus activity for the last week, yesterday, and today.
     """
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     cursor = conn.cursor()
 
     today = datetime.now().date()
@@ -190,7 +205,7 @@ def fetch_focus_summary():
 
 
 def save_setting(key, value):
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
         "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value)
@@ -200,7 +215,7 @@ def save_setting(key, value):
 
 
 def get_setting(key, default_value):
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT value FROM settings WHERE key = ?", (key,))
     result = c.fetchone()
@@ -209,7 +224,7 @@ def get_setting(key, default_value):
 
 
 def delete_setting(key):
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
     c.execute("DELETE FROM settings WHERE key = ?", (key,))
     conn.commit()
@@ -221,7 +236,7 @@ def fetch_yearly_daily_session_counts():
     Returns a dictionary of { date_string (YYYY-MM-DD): session_count }
     for each day in the last 365 days.
     """
-    conn = sqlite3.connect("pomodoro_sessions.db")
+    conn = get_conn()
     c = conn.cursor()
 
     # Prepare a dict for all days in the last year, initialized with 0
